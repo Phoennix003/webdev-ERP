@@ -3,27 +3,52 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ITPC — Inventory</title>
+    <title>ITPC Inventory Page</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div class="app-shell">
+      <!-- Sidebar: identical on every page. main.js adds "is-active" to the
+         link matching the current page (Feature 1). -->
       <aside class="sidebar">
         <div class="sidebar-brand">
           ITPC
           <span>Program Council ERP</span>
         </div>
 
-        <!-- No hardcoded "is-active" here anymore — main.js sets it
-           based on the current page (Feature 1: Active nav highlighting) -->
         <ul class="sidebar-nav">
-          <li><a href="dashboard.html">Dashboard</a></li>
-          <li><a href="inventory.html">Inventory</a></li>
-          <li><a href="hr.html">Officers</a></li>
+          <li>
+            <a href="dashboard.html"
+              ><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="9" rx="1" />
+                <rect x="14" y="3" width="7" height="5" rx="1" />
+                <rect x="14" y="12" width="7" height="9" rx="1" />
+                <rect x="3" y="16" width="7" height="5" rx="1" /></svg
+              >Dashboard</a
+            >
+          </li>
+          <li>
+            <a href="inventory.html"
+              ><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 8l-9-5-9 5v8l9 5 9-5V8z" />
+                <path d="M3 8l9 5 9-5M12 13v8" /></svg
+              >Inventory</a
+            >
+          </li>
+          <li>
+            <a href="hr.html"
+              ><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="9" cy="8" r="3.5" />
+                <path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6" />
+                <circle cx="17" cy="9" r="2.5" />
+                <path d="M17 14c2.8 0 4.5 1.9 4.5 4.5" /></svg
+              >Officers</a
+            >
+          </li>
         </ul>
 
         <div class="sidebar-footer">
-          <a href="index.html">Log Out</a>
+          <a href="index.html" id="logoutLink">Log Out</a>
         </div>
       </aside>
 
@@ -33,13 +58,13 @@
             <h1>Inventory</h1>
             <p>Track council assets, merch, and event materials.</p>
           </div>
-          <!-- Feature 5: only shown to admins -->
           <button class="btn btn-primary admin-only" id="addItemBtn">
             + Add Item
           </button>
         </div>
 
-        <!-- Feature 2: Search + filter -->
+        <!-- Search + filters (Feature 2). Each select's data-filter matches a
+           data-* attribute on the table rows. -->
         <div class="toolbar">
           <input
             type="text"
@@ -48,13 +73,21 @@
             aria-label="Search inventory"
           />
           <div class="toolbar-filters">
-            <select id="categoryFilter" aria-label="Filter by category">
+            <select
+              id="categoryFilter"
+              data-filter="category"
+              aria-label="Filter by category"
+            >
               <option value="">All Categories</option>
               <option value="merchandise">Merchandise</option>
               <option value="event-materials">Event Materials</option>
               <option value="office-supplies">Office Supplies</option>
             </select>
-            <select id="statusFilter" aria-label="Filter by status">
+            <select
+              id="statusFilter"
+              data-filter="status"
+              aria-label="Filter by status"
+            >
               <option value="">All Statuses</option>
               <option value="in-stock">In Stock</option>
               <option value="low">Low Stock</option>
@@ -66,71 +99,52 @@
           <table>
             <thead>
               <tr>
-                <th>Item Name</th>
-                <th>Category</th>
-                <th>Quantity</th>
-                <th>Status</th>
+                <!-- data-sort headers are clickable (sortable columns) -->
+                <th data-sort="name">Item Name</th>
+                <th data-sort="category">Category</th>
+                <th data-sort="quantity">Quantity</th>
+                <th data-sort="status">Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
-            <!-- Feature 3: rows carry data-category / data-status so JS
-               can filter without re-reading visible text. -->
-            <tbody id="inventoryTableBody">
-              <tr data-category="merchandise" data-status="in-stock">
-                <td>CSITPC Org T-Shirts (S-XL)</td>
-                <td>Merchandise</td>
-                <td>35</td>
-                <td><span class="status-badge status-ok">In Stock</span></td>
-                <td>
-                  <a href="#" class="view-link">View</a>
-                  <a href="#" class="delete-link admin-only">Delete</a>
-                </td>
-              </tr>
-              <tr data-category="event-materials" data-status="low">
-                <td>Tarpaulins (event banners)</td>
-                <td>Event Materials</td>
-                <td>2</td>
-                <td><span class="status-badge status-low">Low Stock</span></td>
-                <td>
-                  <a href="#" class="view-link">View</a>
-                  <a href="#" class="delete-link admin-only">Delete</a>
-                </td>
-              </tr>
-              <tr data-category="office-supplies" data-status="in-stock">
-                <td>Certificate Holders</td>
-                <td>Office Supplies</td>
-                <td>15</td>
-                <td><span class="status-badge status-ok">In Stock</span></td>
-                <td>
-                  <a href="#" class="view-link">View</a>
-                  <a href="#" class="delete-link admin-only">Delete</a>
-                </td>
-              </tr>
-            </tbody>
+            <!-- Rows are rendered by main.js from saved data -->
+            <tbody id="inventoryTableBody"></tbody>
           </table>
+          <div class="empty-state" id="emptyState" hidden>
+            <strong>No items found</strong>
+            Try a different search or filter.
+          </div>
         </div>
       </main>
     </div>
 
-    <!-- Feature 3: View-detail modal (shared shell, filled in by JS) -->
-    <div class="modal-overlay" id="viewModal">
+    <!-- Detail modal: title and list are filled in by main.js -->
+    <div
+      class="modal-overlay"
+      id="viewModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="viewModalTitle"
+    >
       <div class="modal-box">
-        <button class="modal-close" id="viewModalClose" aria-label="Close">
-          &times;
-        </button>
-        <h2>Item details</h2>
-        <div id="viewModalBody"></div>
+        <button class="modal-close" aria-label="Close">&times;</button>
+        <h2 id="viewModalTitle">Details</h2>
+        <ul id="viewModalBody"></ul>
       </div>
     </div>
 
-    <!-- Feature 4: Add-item modal -->
-    <div class="modal-overlay" id="addItemModal">
+    <!-- Add-item modal (Feature 4) -->
+    <div
+      class="modal-overlay"
+      id="addItemModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="addItemTitle"
+    >
       <div class="modal-box">
-        <button class="modal-close" id="addItemModalClose" aria-label="Close">
-          &times;
-        </button>
-        <h2>Add inventory item</h2>
-        <form id="addItemForm">
+        <button class="modal-close" aria-label="Close">&times;</button>
+        <h2 id="addItemTitle">Add inventory item</h2>
+        <form id="addItemForm" novalidate>
           <div class="form-field">
             <label for="itemName">Item name</label>
             <input type="text" id="itemName" name="itemName" />
@@ -150,6 +164,7 @@
               id="itemQuantity"
               name="itemQuantity"
               min="0"
+              step="1"
             />
           </div>
           <p id="addItemError" class="form-error" hidden></p>
@@ -158,8 +173,7 @@
       </div>
     </div>
 
-    <!-- Feature 6: Toast for success messages -->
-    <div class="toast" id="toast"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="main.js"></script>
   </body>
