@@ -3,18 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ITPC Dashboard Page</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>ITPC — Dashboard</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,600;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
     <div class="app-shell">
       <!-- Sidebar: identical on every page. main.js adds "is-active" to the
-         link matching the current page (Feature 1). -->
+         link for the current page and fills in the user chip. -->
       <aside class="sidebar">
-        <div class="sidebar-brand">
-          ITPC
-          <span>Program Council ERP</span>
-        </div>
+        <a class="sidebar-brand" href="dashboard.html">
+          <img
+            src="assets/itpc-logo.png"
+            alt="ITPC logo"
+            width="42"
+            height="42"
+          />
+          <span class="brand-text">
+            <strong>ITPC</strong>
+            <small>Program Council ERP</small>
+          </span>
+        </a>
 
         <ul class="sidebar-nav">
           <li>
@@ -48,7 +63,13 @@
         </ul>
 
         <div class="sidebar-footer">
-          <a href="index.html" id="logoutLink">Log Out</a>
+          <div class="user-chip">
+            <span class="user-avatar" id="userAvatar">?</span>
+            <span
+              ><strong id="userName">Guest</strong><small id="userRole"></small
+            ></span>
+          </div>
+          <a href="index.html" id="logoutLink">Log out</a>
         </div>
       </aside>
 
@@ -56,7 +77,18 @@
         <div class="page-header">
           <div>
             <h1>Dashboard</h1>
-            <p>Live overview of council assets and officers.</p>
+            <p id="dashGreeting">
+              Live overview of council assets and officers.
+            </p>
+          </div>
+          <!-- Shortcuts: they open the Add form on the target page (?add=1) -->
+          <div class="quick-actions">
+            <a class="btn btn-primary admin-only" href="inventory.html?add=1"
+              >+ Add item</a
+            >
+            <a class="btn btn-secondary admin-only" href="hr.html?add=1"
+              >+ Add officer</a
+            >
           </div>
         </div>
 
@@ -64,30 +96,46 @@
            by main.js and count up on load. -->
         <section class="stat-grid" aria-label="Key figures">
           <div class="stat-card">
-            <small>Total Inventory Items</small>
+            <small>Inventory items</small>
             <div class="stat-value" id="statTotalItems">0</div>
           </div>
+          <div class="stat-card">
+            <small>Total units on hand</small>
+            <div class="stat-value" id="statTotalUnits">0</div>
+          </div>
           <div class="stat-card alert">
-            <small>Low Stock Alerts</small>
+            <small>Low stock alerts</small>
             <div class="stat-value" id="statLowStock">0</div>
           </div>
           <div class="stat-card">
-            <small>Active Officers</small>
+            <small>Active officers</small>
             <div class="stat-value" id="statActiveOfficers">0</div>
           </div>
         </section>
 
-        <section class="panel">
+        <section class="dash-grid">
+          <div class="panel">
+            <div class="panel-header"><h2>Stock levels</h2></div>
+            <ul class="bar-list" id="stockBars"></ul>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header"><h2>Officers per committee</h2></div>
+            <ul class="bar-list" id="committeeBars"></ul>
+          </div>
+        </section>
+
+        <section class="panel" style="margin-top: 24px">
           <div class="panel-header">
-            <h2>Recent Activity</h2>
+            <h2>Recent activity</h2>
             <button class="btn btn-secondary admin-only" id="resetDataBtn">
               Reset demo data
             </button>
           </div>
           <ul class="activity-list" id="activityList"></ul>
           <p class="empty-state" id="activityEmpty" hidden>
-            No activity yet. Add, update, or delete something on the Inventory
-            or Officers page.
+            No activity yet. Add, edit, or delete something on the Inventory or
+            Officers page.
           </p>
         </section>
       </main>
@@ -95,6 +143,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="main.js"></script>
+    <script src="js/main.js"></script>
   </body>
 </html>

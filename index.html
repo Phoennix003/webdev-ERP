@@ -3,22 +3,48 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ITPC Login Page</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>ITPC — Log in</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,600;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
     <!--
     LOGIN PAGE
     - Front-end only: accounts are checked in js/main.js (DUMMY_ACCOUNTS).
       Swap that check for a real backend/API call when you build one.
+    - The red glow follows your mouse (see setupLoginSpotlight in main.js).
   -->
 
-    <div class="login-screen">
-      <div class="login-card">
-        <h1>ITPC</h1>
-        <p>Program Council ERP</p>
+    <main class="login-screen" id="loginScreen">
+      <div class="login-bg" aria-hidden="true"></div>
 
-        <form id="loginForm">
+      <section class="login-hero">
+        <img
+          class="hero-logo"
+          src="assets/itpc-logo.png"
+          alt="ITPC logo"
+          width="112"
+          height="112"
+        />
+        <h1 class="wordmark">ITPC</h1>
+        <p class="hero-name">Information Technology Program Council</p>
+        <p class="hero-school">De La Salle University – Dasmariñas</p>
+        <div class="year-tags" aria-label="Academic year 2026 to 2027">
+          <span>2026</span><span>2027</span>
+        </div>
+      </section>
+
+      <section class="login-card" id="loginCard">
+        <h2>Sign in</h2>
+        <p>Manage council assets and officers.</p>
+
+        <form id="loginForm" novalidate>
           <div class="form-field">
             <label for="username">Username</label>
             <input
@@ -26,26 +52,50 @@
               id="username"
               name="username"
               placeholder="Enter your username"
+              autocomplete="username"
             />
           </div>
 
           <div class="form-field">
             <label for="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              placeholder="Enter your password"
-            />
+            <div class="password-wrap">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                class="toggle-password"
+                id="togglePassword"
+                aria-label="Show password"
+              >
+                Show
+              </button>
+            </div>
           </div>
 
-          <p id="loginError" class="form-error" hidden></p>
+          <p id="loginError" class="form-error" role="alert" hidden></p>
 
-          <button type="submit" class="btn btn-primary">Log In</button>
+          <button type="submit" class="btn btn-primary">Log in</button>
         </form>
-      </div>
-    </div>
 
-    <script src="main.js"></script>
+        <div class="demo-accounts">
+          <small>Demo accounts for the presentation</small>
+          <div class="demo-buttons">
+            <button type="button" class="btn btn-secondary" data-demo="admin">
+              Fill admin
+            </button>
+            <button type="button" class="btn btn-secondary" data-demo="member">
+              Fill member
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="js/main.js"></script>
   </body>
 </html>

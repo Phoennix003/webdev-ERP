@@ -3,18 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ITPC Inventory Page</title>
-    <link rel="stylesheet" href="style.css" />
+    <title>ITPC — Inventory</title>
+    <link rel="icon" type="image/png" href="assets/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Chakra+Petch:ital,wght@0,500;0,600;0,700;1,600;1,700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
     <div class="app-shell">
       <!-- Sidebar: identical on every page. main.js adds "is-active" to the
-         link matching the current page (Feature 1). -->
+         link for the current page and fills in the user chip. -->
       <aside class="sidebar">
-        <div class="sidebar-brand">
-          ITPC
-          <span>Program Council ERP</span>
-        </div>
+        <a class="sidebar-brand" href="dashboard.html">
+          <img
+            src="assets/itpc-logo.png"
+            alt="ITPC logo"
+            width="42"
+            height="42"
+          />
+          <span class="brand-text">
+            <strong>ITPC</strong>
+            <small>Program Council ERP</small>
+          </span>
+        </a>
 
         <ul class="sidebar-nav">
           <li>
@@ -48,7 +63,13 @@
         </ul>
 
         <div class="sidebar-footer">
-          <a href="index.html" id="logoutLink">Log Out</a>
+          <div class="user-chip">
+            <span class="user-avatar" id="userAvatar">?</span>
+            <span
+              ><strong id="userName">Guest</strong><small id="userRole"></small
+            ></span>
+          </div>
+          <a href="index.html" id="logoutLink">Log out</a>
         </div>
       </aside>
 
@@ -59,39 +80,47 @@
             <p>Track council assets, merch, and event materials.</p>
           </div>
           <button class="btn btn-primary admin-only" id="addItemBtn">
-            + Add Item
+            + Add item
           </button>
         </div>
 
-        <!-- Search + filters (Feature 2). Each select's data-filter matches a
-           data-* attribute on the table rows. -->
+        <!-- Search + filters. Each select's data-filter matches a data-*
+           attribute on the table rows. -->
         <div class="toolbar">
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Search items..."
-            aria-label="Search inventory"
-          />
+          <div class="search-wrap">
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Search items..."
+              aria-label="Search inventory"
+            />
+            <kbd aria-hidden="true">/</kbd>
+          </div>
           <div class="toolbar-filters">
             <select
               id="categoryFilter"
               data-filter="category"
               aria-label="Filter by category"
             >
-              <option value="">All Categories</option>
+              <option value="">All categories</option>
               <option value="merchandise">Merchandise</option>
-              <option value="event-materials">Event Materials</option>
-              <option value="office-supplies">Office Supplies</option>
+              <option value="event-materials">Event materials</option>
+              <option value="office-supplies">Office supplies</option>
             </select>
             <select
               id="statusFilter"
               data-filter="status"
               aria-label="Filter by status"
             >
-              <option value="">All Statuses</option>
-              <option value="in-stock">In Stock</option>
-              <option value="low">Low Stock</option>
+              <option value="">All statuses</option>
+              <option value="in-stock">In stock</option>
+              <option value="low">Low stock</option>
             </select>
+            <span
+              class="result-count"
+              id="resultCount"
+              aria-live="polite"
+            ></span>
           </div>
         </div>
 
@@ -100,7 +129,7 @@
             <thead>
               <tr>
                 <!-- data-sort headers are clickable (sortable columns) -->
-                <th data-sort="name">Item Name</th>
+                <th data-sort="name">Item name</th>
                 <th data-sort="category">Category</th>
                 <th data-sort="quantity">Quantity</th>
                 <th data-sort="status">Status</th>
@@ -133,7 +162,8 @@
       </div>
     </div>
 
-    <!-- Add-item modal (Feature 4) -->
+    <!-- Add / Edit item modal. The same form is used for both; main.js
+       changes the title and button text depending on the mode. -->
     <div
       class="modal-overlay"
       id="addItemModal"
@@ -153,8 +183,8 @@
             <label for="itemCategory">Category</label>
             <select id="itemCategory" name="itemCategory">
               <option value="merchandise">Merchandise</option>
-              <option value="event-materials">Event Materials</option>
-              <option value="office-supplies">Office Supplies</option>
+              <option value="event-materials">Event materials</option>
+              <option value="office-supplies">Office supplies</option>
             </select>
           </div>
           <div class="form-field">
@@ -168,13 +198,15 @@
             />
           </div>
           <p id="addItemError" class="form-error" hidden></p>
-          <button type="submit" class="btn btn-primary">Add item</button>
+          <button type="submit" class="btn btn-primary" id="addItemSubmit">
+            Add item
+          </button>
         </form>
       </div>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-    <script src="main.js"></script>
+    <script src="js/main.js"></script>
   </body>
 </html>
