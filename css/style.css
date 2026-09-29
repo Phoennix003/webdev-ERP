@@ -41,7 +41,43 @@
   --sidebar-width: 244px;
   --transition: 0.18s ease;
 
+  /* Tokens for colors that used to be hardcoded (so light mode can change them) */
+  --hover-text: #ffffff;
+  --hover-bg: rgba(255, 255, 255, 0.05);
+  --placeholder: #6b6f75;
+  --on-accent: #ffffff; /* text that sits on crimson/maroon */
+  --login-card-bg: rgba(35, 37, 39, 0.92);
+  --login-wash: linear-gradient(160deg, #6d0c12 0%, var(--maroon) 40%, var(--ink) 100%);
+  --wordmark-grad: linear-gradient(180deg, #f3f4f5 0%, #8d9095 52%, #cfd1d4 100%);
+
   color-scheme: dark; /* makes native dropdowns, scrollbars, number spinners dark */
+}
+
+/* Light theme: only the variables change. Toggled by data-theme="light" on <html>. */
+:root[data-theme="light"] {
+  --crimson-bright: #c62830; /* slightly deeper so it's readable on white */
+
+  --ink: #f2f3f5;
+  --charcoal: #ffffff;
+  --charcoal-raised: #eceef1;
+  --line: #d6d9de;
+
+  --steel: #5f646b;
+  --steel-light: #3c4045;
+  --text: #1b1c1e;
+
+  --ok: #2e8f63;
+  --ok-soft: rgba(46, 143, 99, 0.14);
+  --danger-soft: rgba(182, 32, 33, 0.1);
+
+  --hover-text: #111213;
+  --hover-bg: rgba(0, 0, 0, 0.05);
+  --placeholder: #8a8f96;
+  --login-card-bg: rgba(255, 255, 255, 0.94);
+  --login-wash: linear-gradient(160deg, #f4d3d6 0%, #f3e3e4 40%, var(--ink) 100%);
+  --wordmark-grad: linear-gradient(180deg, #4a4d52 0%, #1f2226 52%, #5b5f65 100%);
+
+  color-scheme: light;
 }
 
 * {
@@ -220,16 +256,16 @@ small {
 }
 
 .sidebar-nav li a:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--hover-bg);
   padding-left: 27px;
-  color: #ffffff;
+  color: var(--hover-text);
 }
 
 /* main.js adds this class to the link of the page you're on */
 .sidebar-nav li a.is-active {
   background: linear-gradient(90deg, rgba(182, 32, 33, 0.28), transparent);
   border-left-color: var(--crimson-bright);
-  color: #ffffff;
+  color: var(--hover-text);
   font-weight: 600;
 }
 
@@ -263,6 +299,7 @@ small {
   display: grid;
   place-items: center;
   background: var(--crimson);
+  color: var(--on-accent);
   font-family: var(--font-display);
   font-weight: 700;
   flex-shrink: 0;
@@ -329,7 +366,7 @@ small {
 
 .btn-secondary:hover {
   border-color: var(--steel);
-  color: #ffffff;
+  color: var(--hover-text);
 }
 
 .form-field {
@@ -359,7 +396,7 @@ small {
 }
 
 .form-field input::placeholder {
-  color: #6b6f75;
+  color: var(--placeholder);
 }
 
 .form-field input:focus,
@@ -383,6 +420,61 @@ small {
 
 body.is-admin .admin-only {
   display: inline-block !important;
+}
+
+/* ---------- Theme toggle ---------- */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--steel);
+  transition: color var(--transition);
+}
+
+.theme-toggle:hover {
+  color: var(--crimson-bright);
+}
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Dark mode shows "Light mode" (sun); light mode shows "Dark mode" (moon) */
+.theme-toggle .to-dark {
+  display: none;
+}
+:root[data-theme="light"] .theme-toggle .to-light {
+  display: none;
+}
+:root[data-theme="light"] .theme-toggle .to-dark {
+  display: inline-block;
+}
+
+/* Login page: floating button, top-right */
+.login-screen .theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 2;
+  width: auto;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--login-card-bg);
+  color: var(--steel-light);
 }
 
 /* ---------- 6. Cards & panels ---------- */
@@ -549,7 +641,7 @@ thead th[data-sort] {
 }
 
 thead th[data-sort]:hover {
-  color: #ffffff;
+  color: var(--hover-text);
 }
 
 thead th[data-sort]::after {
@@ -794,7 +886,7 @@ tbody td a.delete-link:hover {
   bottom: 24px;
   right: 24px;
   background: var(--charcoal-raised);
-  color: #ffffff;
+  color: var(--text);
   padding: 13px 18px;
   border-radius: var(--radius);
   border-left: 4px solid var(--crimson);
@@ -879,7 +971,7 @@ tbody td a.delete-link:hover {
 }
 
 .modal-close:hover {
-  color: #ffffff;
+  color: var(--hover-text);
 }
 
 .modal-box form .btn-primary {
@@ -933,7 +1025,7 @@ tbody td a.delete-link:hover {
       transparent 80.25%
     ),
     /* base red-to-black wash */
-    linear-gradient(160deg, #6d0c12 0%, var(--maroon) 40%, var(--ink) 100%);
+    var(--login-wash);
 }
 
 .login-hero,
@@ -958,7 +1050,7 @@ tbody td a.delete-link:hover {
   font-size: clamp(3.5rem, 9vw, 7rem);
   line-height: 0.95;
   padding-right: 0.08em; /* italic text overhangs; this stops the last letter clipping */
-  background: linear-gradient(180deg, #f3f4f5 0%, #8d9095 52%, #cfd1d4 100%);
+  background: var(--wordmark-grad);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -994,6 +1086,7 @@ tbody td a.delete-link:hover {
 
 .year-tags span {
   background: var(--crimson);
+  color: var(--on-accent);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 0.95rem;
@@ -1005,7 +1098,7 @@ tbody td a.delete-link:hover {
   justify-self: center;
   width: 100%;
   max-width: 400px;
-  background: rgba(35, 37, 39, 0.92);
+  background: var(--login-card-bg);
   border: 1px solid var(--line);
   border-top: 4px solid var(--crimson);
   padding: 36px 34px 30px;
@@ -1052,7 +1145,7 @@ tbody td a.delete-link:hover {
 }
 
 .toggle-password:hover {
-  color: #ffffff;
+  color: var(--hover-text);
 }
 
 /* Demo account shortcuts: click to fill the form (handy when presenting) */
@@ -1081,6 +1174,355 @@ tbody td a.delete-link:hover {
 /* Wrong password: the card shakes once */
 .login-card.is-shaking {
   animation: shake 0.4s ease;
+}
+
+/* ---------- 9b. Events & calendar ---------- */
+:root {
+  --ev-meeting: var(--crimson-bright);
+  --ev-workshop: var(--ok);
+  --ev-seminar: #5b9bd5;
+  --ev-social: #e0a63a;
+}
+
+/* Textareas and side-by-side fields share the form-field look */
+.form-field textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-family: inherit;
+  font-size: 0.98rem;
+  color: var(--text);
+  background: var(--ink);
+  resize: vertical;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.form-field textarea:focus {
+  outline: none;
+  border-color: var(--crimson-bright);
+  box-shadow: 0 0 0 3px rgba(218, 67, 76, 0.25);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* .btn sets display, which would otherwise beat the hidden attribute */
+.btn[hidden] {
+  display: none;
+}
+
+.events-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.events-layout .panel {
+  margin-bottom: 0;
+}
+
+.cal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cal-nav {
+  display: flex;
+  gap: 6px;
+}
+
+.cal-nav .btn {
+  padding: 6px 12px;
+}
+
+.cal-weekdays,
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.cal-weekdays span {
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--steel);
+  padding-bottom: 6px;
+}
+
+.cal-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  min-height: 68px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    border-color var(--transition);
+}
+
+.cal-cell.is-empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+
+.cal-cell:not(.is-empty):hover {
+  background: var(--charcoal-raised);
+  border-color: var(--steel);
+}
+
+.cal-cell.is-today {
+  border-color: var(--crimson-bright);
+}
+
+.cal-cell.is-today .cal-day {
+  background: var(--crimson);
+  color: var(--on-accent);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  margin: -2px 0 0 -4px;
+}
+
+.cal-cell.is-selected {
+  background: var(--charcoal-raised);
+  box-shadow: inset 0 0 0 2px var(--crimson-bright);
+}
+
+.cal-day {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cal-dots {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 8px;
+}
+
+.cal-dots em {
+  font-style: normal;
+  font-size: 0.7rem;
+  color: var(--steel);
+}
+
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--steel);
+}
+
+.dot.type-meeting {
+  background: var(--ev-meeting);
+}
+.dot.type-workshop {
+  background: var(--ev-workshop);
+}
+.dot.type-seminar {
+  background: var(--ev-seminar);
+}
+.dot.type-social {
+  background: var(--ev-social);
+}
+
+.cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 16px;
+  font-size: 0.82rem;
+  color: var(--steel);
+}
+
+.cal-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Event rows: used on the Events page and in the Dashboard widget */
+.event-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.event-item:last-child {
+  border-bottom: none;
+}
+
+.event-item.is-past {
+  opacity: 0.55;
+}
+
+.event-date {
+  flex-shrink: 0;
+  width: 48px;
+  padding: 6px 0;
+  text-align: center;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--crimson);
+  border-radius: var(--radius);
+  background: var(--ink);
+}
+
+.event-date b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.event-date span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--steel);
+}
+
+.event-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.event-info strong {
+  display: block;
+}
+
+.event-info small {
+  display: block;
+  color: var(--steel);
+  margin: 2px 0 6px;
+}
+
+.event-tag {
+  display: inline-block;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid currentColor;
+}
+
+.event-tag.type-meeting {
+  color: var(--ev-meeting);
+}
+.event-tag.type-workshop {
+  color: var(--ev-workshop);
+}
+.event-tag.type-seminar {
+  color: var(--ev-seminar);
+}
+.event-tag.type-social {
+  color: var(--ev-social);
+}
+
+.event-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+}
+
+.event-actions a {
+  color: var(--crimson-bright);
+  font-weight: 600;
+}
+
+.event-actions a.delete-link {
+  color: var(--steel);
+}
+.event-actions a.delete-link:hover {
+  color: var(--crimson-bright);
+}
+
+/* Dashboard: low stock alert rows */
+.low-list li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.low-list li:last-child {
+  border-bottom: none;
+}
+
+.low-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.low-info strong {
+  display: block;
+}
+
+.low-info small {
+  color: var(--steel);
+}
+
+.low-list .meter {
+  flex: 0 0 72px;
+  min-width: 0;
+}
+
+.low-list .status-badge {
+  white-space: nowrap;
+}
+
+@media (max-width: 1000px) {
+  .events-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .cal-cell {
+    min-height: 52px;
+    padding: 4px;
+  }
+  .cal-weekdays span {
+    font-size: 0.68rem;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .event-item {
+    flex-wrap: wrap;
+  }
+  .event-actions {
+    width: 100%;
+    padding-left: 62px;
+  }
 }
 
 /* ---------- 12. Motion ----------
@@ -1248,6 +1690,13 @@ tbody td a.delete-link:hover {
   .sidebar-footer a {
     padding: 8px 10px;
   }
+  .sidebar-footer .theme-toggle {
+    width: auto;
+    padding: 8px 10px;
+  }
+  .theme-toggle span {
+    display: none !important; /* icon only in the top bar */
+  }
 
   .main-content {
     padding: 24px 16px 40px;
@@ -1285,3 +1734,219 @@ tbody td a.delete-link:hover {
     display: none;
   }
 }
+
+/* Very narrow phones: with 4 nav links the top bar no longer fits in one row.
+   Brand + theme/Log out stay on the first row, the links get their own row. */
+@media (max-width: 400px) {
+  .sidebar {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+  .sidebar-brand {
+    margin-right: auto;
+    padding-right: 0;
+  }
+  .sidebar-footer {
+    order: 2;
+    margin-left: 0;
+    padding-left: 0;
+  }
+  .sidebar-nav {
+    order: 3;
+    width: 100%;
+    justify-content: space-around;
+  }
+}
+
+/* ---------- 9c. Backup panel ---------- */
+.backup-note {
+  color: var(--steel);
+  margin-bottom: 14px;
+  max-width: 70ch;
+}
+
+.backup-note span {
+  color: var(--steel-light);
+  font-weight: 600;
+}
+
+#backupStatus {
+  margin-top: 12px;
+}
+
+/* ---------- 9d. Printable report ----------
+   Always light, whatever theme the app is in, so it prints cleanly. */
+body.report-page {
+  background: #e9eaec;
+  color: #161718;
+}
+
+.report-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  max-width: 860px;
+  margin: 20px auto 0;
+  padding: 0 16px;
+}
+
+.report-toolbar .btn-secondary {
+  background: #ffffff;
+  color: #3c4045;
+  border-color: #c9ccd0;
+}
+
+.report {
+  max-width: 860px;
+  margin: 16px auto 40px;
+  padding: 40px 44px;
+  background: #ffffff;
+  color: #161718;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.report h1,
+.report h2 {
+  color: #161718;
+}
+
+.report h2 {
+  font-size: 1.05rem;
+  margin: 28px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #b62021;
+  break-after: avoid;
+}
+
+.report-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.report-head img {
+  border-radius: 50%;
+}
+
+.report-head h1 {
+  font-size: 1.7rem;
+}
+
+.report-head p {
+  margin-top: 4px;
+  color: #5f646b;
+  font-size: 0.9rem;
+}
+
+.report-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.report-stats div {
+  padding: 10px 12px;
+  border: 1px solid #d6d9de;
+  border-top: 3px solid #b62021;
+}
+
+.report-stats b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.report-stats span {
+  font-size: 0.78rem;
+  color: #5f646b;
+}
+
+.report table {
+  font-size: 0.9rem;
+}
+
+.report thead th {
+  padding: 7px 8px;
+  color: #3c4045;
+  border-bottom: 1px solid #8a8f96;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.report tbody td {
+  padding: 7px 8px;
+  border-bottom: 1px solid #e1e3e6;
+  vertical-align: top;
+}
+
+.report tbody tr:hover {
+  background: none;
+  box-shadow: none;
+}
+
+.report .r-low {
+  color: #b62021;
+}
+
+.report-empty {
+  color: #5f646b;
+  font-style: italic;
+}
+
+.report-foot {
+  margin-top: 32px;
+  padding-top: 10px;
+  border-top: 1px solid #d6d9de;
+  font-size: 0.78rem;
+  color: #5f646b;
+}
+
+@media (max-width: 700px) {
+  .report {
+    padding: 24px 18px;
+  }
+  .report-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .report table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  body.report-page {
+    background: #ffffff;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .report {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+  .report-stats {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  .report table {
+    display: table;
+  }
+  .report thead {
+    display: table-header-group; /* repeat the header on every page */
+  }
+  .report tr {
+    break-inside: avoid;
+  }
+}
+
