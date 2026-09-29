@@ -65,3 +65,17 @@ Fixes:
 - Native prompt()/confirm() dialogs replaced
 - Duplicate-name check no longer blocks saving an item you're editing
 - Rebranded CSITPC -> ITPC (storage keys now itpc\_\*)
+
+(Added Sept 29, 2026)
+
+Events and dashboard
+
+- Events page with a month calendar (colored dots per event type, click a day to filter), plus add/edit/delete for admins and view-only for members
+- Dashboard widgets: Upcoming events and Low stock alerts
+
+Backup and report
+
+- Dashboard > Backup & reports: "Download backup" saves everything (inventory, officers, events, activity) as a .json file, so data survives clearing the browser or switching devices
+- "Restore from backup" validates the file first (wrong app, bad quantities, duplicate ids are rejected and nothing changes), asks for confirmation, then replaces the current data. Admin only. Older backups without events still restore
+- "Print report" opens report.html: a light-themed summary (stats, low stock, inventory, officers, upcoming events) for Print / Save as PDF
+

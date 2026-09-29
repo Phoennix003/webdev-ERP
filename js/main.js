@@ -9,6 +9,8 @@
 //   B. Login, logout & roles      E. Inventory page
 //   C. Small helpers              F. Officers page
 //                                 G. Dashboard
+//   I. Events + calendar (Events page and Dashboard widget)
+//   J. Backup & restore (JSON)      K. Printable report
 // ============================================================
 
 // ============================================================
@@ -21,6 +23,8 @@ const KEYS = {
   inventory: "itpc_inventory",
   officers: "itpc_officers",
   activity: "itpc_activity",
+  events: "itpc_events",
+  lastBackup: "itpc_last_backup", // when a backup was last downloaded (not part of the backup)
 };
 
 const LOW_STOCK_LIMIT = 5; // quantity at or below this = "Low stock"
@@ -91,6 +95,69 @@ const DEFAULT_OFFICERS = [
     status: "active",
   },
 ];
+
+// Sample events are dated relative to today so the calendar always has
+// something to show, whenever the demo is opened.
+function dateOffset(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return toDateKey(d);
+}
+
+const DEFAULT_EVENTS = [
+  {
+    id: 1,
+    title: "General Assembly",
+    date: dateOffset(2),
+    time: "13:00",
+    location: "Main Auditorium",
+    type: "meeting",
+    description: "Semester kickoff with all officers and members.",
+  },
+  {
+    id: 2,
+    title: "Web Dev Workshop",
+    date: dateOffset(5),
+    time: "09:00",
+    location: "Computer Lab 3",
+    type: "workshop",
+    description: "Hands-on HTML, CSS and JavaScript session.",
+  },
+  {
+    id: 3,
+    title: "Officers Meeting",
+    date: dateOffset(9),
+    time: "16:30",
+    location: "ITPC Office",
+    type: "meeting",
+    description: "Budget and logistics planning.",
+  },
+  {
+    id: 4,
+    title: "ITPC Night",
+    date: dateOffset(16),
+    time: "18:00",
+    location: "University Grounds",
+    type: "social",
+    description: "Annual org night with games and performances.",
+  },
+  {
+    id: 5,
+    title: "Tech Talk: Careers in IT",
+    date: dateOffset(-4),
+    time: "14:00",
+    location: "Room 204",
+    type: "seminar",
+    description: "Guest speakers from partner companies.",
+  },
+];
+
+const EVENT_TYPE_LABELS = {
+  meeting: "Meeting",
+  workshop: "Workshop",
+  seminar: "Seminar",
+  social: "Social",
+};
 
 // Turns the value stored in the data into the text we show on screen
 const CATEGORY_LABELS = {
@@ -301,6 +368,38 @@ function highlightActiveNav() {
     if (link.getAttribute("href") === currentPage) {
       link.classList.add("is-active");
     }
+  });
+}
+
+// Dates are stored as "YYYY-MM-DD" text (the same format <input type="date">
+// uses). We build it from the LOCAL date on purpose: toISOString() uses UTC
+// and can shift the day by one in timezones like Manila (UTC+8).
+function toDateKey(date) {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return date.getFullYear() + "-" + month + "-" + day;
+}
+
+// "2026-09-29" -> a Date at local midnight (new Date("2026-09-29") would be UTC)
+function parseDateKey(key) {
+  const parts = key.split("-");
+  return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+}
+
+// "13:00" -> "1:00 PM"
+function formatEventTime(time) {
+  if (!time) return "All day";
+  const parts = time.split(":");
+  const hour = Number(parts[0]);
+  return (hour % 12 || 12) + ":" + parts[1] + (hour >= 12 ? " PM" : " AM");
+}
+
+function formatEventDate(key) {
+  return parseDateKey(key).toLocaleDateString([], {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 }
 
@@ -974,6 +1073,34 @@ function renderBars(listEl, rows, emptyText) {
   }, 60);
 }
 
+// Dashboard widget: items at or below the low-stock limit, emptiest first
+function renderLowStock(items) {
+  const listEl = document.getElementById("lowStockList");
+  if (!listEl) return;
+
+  const low = items
+    .filter((item) => getInventoryStatus(item) === "low")
+    .sort((a, b) => a.quantity - b.quantity);
+
+  document.getElementById("lowStockEmpty").hidden = low.length > 0;
+
+  listEl.innerHTML = low
+    .map((item) => {
+      const isOut = item.quantity === 0;
+      const percent = Math.round((item.quantity / LOW_STOCK_LIMIT) * 100);
+      return `
+      <li>
+        <div class="low-info">
+          <strong>${escapeHTML(item.name)}</strong>
+          <small>${escapeHTML(CATEGORY_LABELS[item.category] || item.category)}</small>
+        </div>
+        <span class="meter is-low"><i style="width:${percent}%"></i></span>
+        <span class="status-badge status-low">${isOut ? "Out of stock" : item.quantity + " left"}</span>
+      </li>`;
+    })
+    .join("");
+}
+
 function setupDashboard() {
   const totalEl = document.getElementById("statTotalItems");
   if (!totalEl) return;
@@ -1042,13 +1169,15 @@ function setupDashboard() {
   );
 
   renderActivity();
+  renderUpcomingEvents();
+  renderLowStock(items);
 
   // Admin-only button to restore the sample data before a demo
   document.getElementById("resetDataBtn").addEventListener("click", () => {
     if (!isAdmin()) return;
     if (
       !window.confirm(
-        "Reset inventory, officers and activity to the sample data?",
+        "Reset inventory, officers, events and activity to the sample data?",
       )
     )
       return;
@@ -1056,7 +1185,642 @@ function setupDashboard() {
     localStorage.removeItem(KEYS.inventory);
     localStorage.removeItem(KEYS.officers);
     localStorage.removeItem(KEYS.activity);
+    localStorage.removeItem(KEYS.events);
     window.location.reload();
+  });
+}
+
+// ============================================================
+// I. EVENTS + CALENDAR
+// Events page: a month calendar and a list of the events in that month.
+// Clicking a day filters the list to that day (admins can add there).
+// The Dashboard shows the next few upcoming events.
+// ============================================================
+function sortEventsByDate(list) {
+  return list.slice().sort((a, b) => {
+    const first = a.date + " " + (a.time || "");
+    const second = b.date + " " + (b.time || "");
+    return first.localeCompare(second);
+  });
+}
+
+function eventCardHTML(event, todayKey) {
+  const day = parseDateKey(event.date);
+  const isPast = event.date < todayKey;
+  const typeLabel = EVENT_TYPE_LABELS[event.type] || event.type;
+
+  return `
+    <li class="event-item ${isPast ? "is-past" : ""}" data-id="${event.id}">
+      <div class="event-date">
+        <b>${day.getDate()}</b>
+        <span>${day.toLocaleDateString([], { month: "short" })}</span>
+      </div>
+      <div class="event-info">
+        <strong>${escapeHTML(event.title)}</strong>
+        <small>${escapeHTML(formatEventTime(event.time))} · ${escapeHTML(event.location)}</small>
+        <span class="event-tag type-${escapeHTML(event.type)}">${escapeHTML(typeLabel)}</span>
+      </div>
+      <div class="event-actions">
+        <a href="#" class="view-link">View</a>
+        <a href="#" class="edit-link admin-only">Edit</a>
+        <a href="#" class="delete-link admin-only">Delete</a>
+      </div>
+    </li>`;
+}
+
+function setupEventsPage() {
+  const grid = document.getElementById("calendarGrid");
+  if (!grid) return;
+
+  let events = loadData(KEYS.events, DEFAULT_EVENTS);
+  const todayKey = toDateKey(new Date());
+  const view = new Date(); // the month being shown
+  view.setDate(1);
+  let selectedKey = null; // clicked day, or null = whole month
+
+  const monthLabel = document.getElementById("calMonth");
+  const listEl = document.getElementById("eventList");
+  const emptyEl = document.getElementById("eventsEmpty");
+  const listTitle = document.getElementById("eventListTitle");
+  const clearBtn = document.getElementById("clearDayBtn");
+
+  // ---- Calendar grid ----
+  function renderCalendar() {
+    monthLabel.textContent = view.toLocaleDateString([], {
+      month: "long",
+      year: "numeric",
+    });
+
+    // Group events by day so each cell can look up its own quickly
+    const byDay = {};
+    events.forEach((event) => {
+      (byDay[event.date] = byDay[event.date] || []).push(event);
+    });
+
+    const year = view.getFullYear();
+    const month = view.getMonth();
+    const firstWeekday = new Date(year, month, 1).getDay(); // 0 = Sunday
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let html = "";
+    for (let i = 0; i < firstWeekday; i++) {
+      html += '<div class="cal-cell is-empty" aria-hidden="true"></div>';
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const key = toDateKey(new Date(year, month, day));
+      const dayEvents = byDay[key] || [];
+      const classes = ["cal-cell"];
+      if (key === todayKey) classes.push("is-today");
+      if (key === selectedKey) classes.push("is-selected");
+
+      // Up to 3 colored dots (one per event, colored by type)
+      const dots = dayEvents
+        .slice(0, 3)
+        .map((e) => `<i class="dot type-${escapeHTML(e.type)}"></i>`)
+        .join("");
+      const more = dayEvents.length > 3 ? `<em>+${dayEvents.length - 3}</em>` : "";
+      const label =
+        key + (dayEvents.length ? ", " + dayEvents.length + " event(s)" : "");
+
+      html += `
+        <button type="button" class="${classes.join(" ")}" data-date="${key}" aria-label="${label}">
+          <span class="cal-day">${day}</span>
+          <span class="cal-dots">${dots}${more}</span>
+        </button>`;
+    }
+    grid.innerHTML = html;
+  }
+
+  // ---- Event list (the selected day, or the whole visible month) ----
+  function renderList() {
+    const year = view.getFullYear();
+    const month = view.getMonth();
+
+    let shown = events.filter((event) => {
+      if (selectedKey) return event.date === selectedKey;
+      const d = parseDateKey(event.date);
+      return d.getFullYear() === year && d.getMonth() === month;
+    });
+    shown = sortEventsByDate(shown);
+
+    listTitle.textContent = selectedKey
+      ? "Events on " + formatEventDate(selectedKey)
+      : "Events this month";
+    clearBtn.hidden = !selectedKey;
+
+    listEl.innerHTML = shown.map((e) => eventCardHTML(e, todayKey)).join("");
+    emptyEl.hidden = shown.length > 0;
+  }
+
+  function render() {
+    renderCalendar();
+    renderList();
+  }
+
+  // ---- Month navigation ----
+  function goToMonth(offset) {
+    view.setMonth(view.getMonth() + offset);
+    selectedKey = null; // a selected day from another month makes no sense
+    render();
+  }
+  document.getElementById("calPrev").addEventListener("click", () => goToMonth(-1));
+  document.getElementById("calNext").addEventListener("click", () => goToMonth(1));
+  document.getElementById("calToday").addEventListener("click", () => {
+    const now = new Date();
+    view.setFullYear(now.getFullYear(), now.getMonth(), 1);
+    selectedKey = null;
+    render();
+  });
+  clearBtn.addEventListener("click", () => {
+    selectedKey = null;
+    render();
+  });
+
+  // Click a day: filter the list to it (click again to clear)
+  grid.addEventListener("click", (event) => {
+    const cell = event.target.closest(".cal-cell[data-date]");
+    if (!cell) return;
+    selectedKey = selectedKey === cell.dataset.date ? null : cell.dataset.date;
+    render();
+  });
+
+  // ---- Add / Edit form: one form, two modes (same pattern as Inventory) ----
+  let editingId = null;
+  const form = document.getElementById("eventForm");
+  const errorEl = document.getElementById("eventError");
+
+  function openEventForm(event) {
+    editingId = event ? event.id : null;
+
+    document.getElementById("eventFormTitle").textContent = event
+      ? "Edit event"
+      : "Add event";
+    document.getElementById("eventSubmit").textContent = event
+      ? "Save changes"
+      : "Add event";
+
+    // New events default to the selected day, otherwise today
+    document.getElementById("eventTitle").value = event ? event.title : "";
+    document.getElementById("eventDate").value = event
+      ? event.date
+      : selectedKey || todayKey;
+    document.getElementById("eventTime").value = event ? event.time : "";
+    document.getElementById("eventType").value = event ? event.type : "meeting";
+    document.getElementById("eventLocation").value = event ? event.location : "";
+    document.getElementById("eventDescription").value = event
+      ? event.description
+      : "";
+
+    errorEl.hidden = true;
+    openModal("eventModal");
+    document.getElementById("eventTitle").focus();
+  }
+
+  document
+    .getElementById("addEventBtn")
+    .addEventListener("click", () => openEventForm(null));
+
+  form.addEventListener("submit", (submitEvent) => {
+    submitEvent.preventDefault();
+
+    const title = document.getElementById("eventTitle").value.trim();
+    const date = document.getElementById("eventDate").value;
+    const time = document.getElementById("eventTime").value;
+    const type = document.getElementById("eventType").value;
+    const location = document.getElementById("eventLocation").value.trim();
+    const description = document.getElementById("eventDescription").value.trim();
+
+    if (title === "" || date === "" || location === "") {
+      errorEl.textContent = "Title, date and location are required.";
+      errorEl.hidden = false;
+      return;
+    }
+
+    // Same title on the same day is almost certainly a mistake
+    const duplicate = events.some(
+      (entry) =>
+        entry.id !== editingId &&
+        entry.date === date &&
+        entry.title.toLowerCase() === title.toLowerCase(),
+    );
+    if (duplicate) {
+      errorEl.textContent = "An event with this title already exists on that day.";
+      errorEl.hidden = false;
+      return;
+    }
+
+    const data = { title, date, time, type, location, description };
+
+    if (editingId === null) {
+      events.push({ id: nextId(events), ...data });
+      logActivity('Added event "' + title + '"', "add");
+      showToast("Event added.");
+    } else {
+      const existing = events.find((entry) => entry.id === editingId);
+      Object.assign(existing, data);
+      logActivity('Edited event "' + title + '"', "edit");
+      showToast("Changes saved.");
+    }
+    saveData(KEYS.events, events);
+
+    // Jump the calendar to the month of the saved event so it's visible
+    const saved = parseDateKey(date);
+    view.setFullYear(saved.getFullYear(), saved.getMonth(), 1);
+    if (selectedKey) selectedKey = date;
+
+    closeModal("eventModal");
+    render();
+  });
+
+  // ---- View / Edit / Delete (event delegation on the list) ----
+  listEl.addEventListener("click", (event) => {
+    const link = event.target.closest("a");
+    if (!link) return;
+    event.preventDefault();
+
+    const id = Number(link.closest(".event-item").dataset.id);
+    const item = events.find((entry) => entry.id === id);
+    if (!item) return;
+
+    if (link.classList.contains("view-link")) {
+      openViewModal(item.title, [
+        ["Date", formatEventDate(item.date)],
+        ["Time", formatEventTime(item.time)],
+        ["Location", item.location],
+        ["Type", EVENT_TYPE_LABELS[item.type] || item.type],
+        ["Details", item.description || "—"],
+      ]);
+      return;
+    }
+
+    if (!isAdmin()) return; // View is for everyone; Edit and Delete are admin-only
+
+    if (link.classList.contains("edit-link")) {
+      openEventForm(item);
+    }
+
+    if (link.classList.contains("delete-link")) {
+      if (!window.confirm('Delete "' + item.title + '"?')) return;
+      events = events.filter((entry) => entry.id !== id);
+      saveData(KEYS.events, events);
+      logActivity('Deleted event "' + item.title + '"', "delete");
+      render();
+      showToast("Event deleted.");
+    }
+  });
+
+  render();
+
+  // Dashboard shortcut: events.html?add=1 opens the form straight away
+  if (isAdmin() && window.location.search === "?add=1") {
+    openEventForm(null);
+  }
+}
+
+// Dashboard widget: the next 4 events from today onward
+function renderUpcomingEvents() {
+  const listEl = document.getElementById("upcomingEvents");
+  if (!listEl) return;
+
+  const todayKey = toDateKey(new Date());
+  const events = loadData(KEYS.events, DEFAULT_EVENTS);
+  const upcoming = sortEventsByDate(
+    events.filter((event) => event.date >= todayKey),
+  ).slice(0, 4);
+
+  document.getElementById("upcomingEmpty").hidden = upcoming.length > 0;
+  listEl.innerHTML = upcoming.map((e) => eventCardHTML(e, todayKey)).join("");
+
+  // The dashboard list is read-only: hide the per-row action links
+  listEl.querySelectorAll(".event-actions").forEach((el) => el.remove());
+}
+
+// ============================================================
+// J. BACKUP & RESTORE (JSON)
+// Everything lives in this browser's localStorage, so clearing site data
+// wipes it. "Download backup" saves a .json file; "Restore" loads one back.
+// A restore REPLACES the current data, so we validate the file first and
+// ask for confirmation.
+// ============================================================
+const BACKUP_APP_ID = "itpc-erp";
+const BACKUP_MAX_BYTES = 2 * 1024 * 1024; // 2 MB is far more than this app ever stores
+
+function downloadFile(filename, text, mimeType) {
+  const blob = new Blob([text], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function buildBackup() {
+  return {
+    app: BACKUP_APP_ID,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    data: {
+      inventory: loadData(KEYS.inventory, DEFAULT_INVENTORY),
+      officers: loadData(KEYS.officers, DEFAULT_OFFICERS),
+      events: loadData(KEYS.events, DEFAULT_EVENTS),
+      activity: loadData(KEYS.activity, []),
+    },
+  };
+}
+
+const isText = (value) => typeof value === "string";
+const isCount = (value) => Number.isInteger(value) && value >= 0;
+
+// Returns an error message (string) when the list is invalid, or null when OK.
+// `check(entry)` returns true for a valid entry.
+function checkList(list, label, check, needsUniqueIds) {
+  if (!Array.isArray(list)) return label + " must be a list.";
+  if (list.length > 5000) return label + " has too many entries.";
+
+  const seen = new Set();
+  for (let i = 0; i < list.length; i++) {
+    const entry = list[i];
+    if (!entry || typeof entry !== "object" || !check(entry)) {
+      return label + " entry #" + (i + 1) + " is missing data or has a bad value.";
+    }
+    if (needsUniqueIds) {
+      if (!isCount(entry.id) || seen.has(entry.id)) {
+        return label + " entry #" + (i + 1) + " has a missing or duplicate id.";
+      }
+      seen.add(entry.id);
+    }
+  }
+  return null;
+}
+
+// Checks a parsed backup file. Returns { error } or { data }.
+function validateBackup(backup) {
+  if (!backup || backup.app !== BACKUP_APP_ID || typeof backup.data !== "object" || !backup.data) {
+    return { error: "This isn't an ITPC ERP backup file." };
+  }
+  const data = backup.data;
+
+  // Inventory and officers are required; events and activity are optional
+  // so older backups (made before Events existed) still restore.
+  if (!data.inventory || !data.officers) {
+    return { error: "The backup is missing inventory or officers." };
+  }
+
+  const problems = [
+    checkList(
+      data.inventory,
+      "Inventory",
+      (e) => isText(e.name) && e.name.trim() !== "" && e.category in CATEGORY_LABELS && isCount(e.quantity),
+      true,
+    ),
+    checkList(
+      data.officers,
+      "Officers",
+      (e) =>
+        isText(e.name) && e.name.trim() !== "" && e.position in POSITION_LABELS &&
+        isText(e.committee) && (e.status === "active" || e.status === "inactive"),
+      true,
+    ),
+    data.events === undefined
+      ? null
+      : checkList(
+          data.events,
+          "Events",
+          (e) =>
+            isText(e.title) && e.title.trim() !== "" &&
+            /^\d{4}-\d{2}-\d{2}$/.test(e.date) &&
+            (e.time === "" || /^\d{2}:\d{2}$/.test(e.time)) &&
+            e.type in EVENT_TYPE_LABELS && isText(e.location) && isText(e.description),
+          true,
+        ),
+    data.activity === undefined
+      ? null
+      : checkList(data.activity, "Activity", (e) => isText(e.message) && isText(e.time), false),
+  ].find((message) => message !== null);
+
+  return problems ? { error: problems } : { data: data };
+}
+
+function setupBackupPanel() {
+  const backupBtn = document.getElementById("backupBtn");
+  if (!backupBtn) return;
+
+  const restoreBtn = document.getElementById("restoreBtn");
+  const fileInput = document.getElementById("restoreFile");
+  const statusEl = document.getElementById("backupStatus");
+  const lastEl = document.getElementById("lastBackup");
+
+  function showStatus(message) {
+    statusEl.textContent = message;
+    statusEl.hidden = !message;
+  }
+
+  function showLastBackup() {
+    const saved = localStorage.getItem(KEYS.lastBackup);
+    lastEl.textContent = saved
+      ? "Last backup: " + formatTime(saved) + "."
+      : "You haven't downloaded a backup yet.";
+  }
+
+  // Shown after a restore, because the page reloads to redraw everything
+  const flash = sessionStorage.getItem("itpc_flash");
+  if (flash) {
+    sessionStorage.removeItem("itpc_flash");
+    showToast(flash);
+  }
+  showLastBackup();
+
+  backupBtn.addEventListener("click", () => {
+    if (!isAdmin()) return;
+    const backup = buildBackup();
+    downloadFile(
+      "itpc-erp-backup-" + toDateKey(new Date()) + ".json",
+      JSON.stringify(backup, null, 2),
+      "application/json",
+    );
+    localStorage.setItem(KEYS.lastBackup, backup.exportedAt);
+    showLastBackup();
+    showStatus("");
+    showToast("Backup downloaded.");
+  });
+
+  restoreBtn.addEventListener("click", () => {
+    if (isAdmin()) fileInput.click();
+  });
+
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+    fileInput.value = ""; // so choosing the same file again still fires "change"
+    if (!file || !isAdmin()) return;
+    showStatus("");
+
+    if (file.size > BACKUP_MAX_BYTES) {
+      showStatus("That file is too large to be an ITPC ERP backup.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => showStatus("Couldn't read that file.");
+    reader.onload = () => {
+      let backup;
+      try {
+        backup = JSON.parse(reader.result);
+      } catch (error) {
+        showStatus("That file isn't valid JSON.");
+        return;
+      }
+
+      const result = validateBackup(backup);
+      if (result.error) {
+        showStatus("Restore cancelled. " + result.error);
+        return;
+      }
+
+      const data = result.data;
+      const counts =
+        data.inventory.length + " items, " + data.officers.length + " officers" +
+        (data.events ? ", " + data.events.length + " events" : "");
+      const when = backup.exportedAt ? " from " + formatTime(backup.exportedAt) : "";
+      if (
+        !window.confirm(
+          "Restore " + counts + when + "?\n\nThis replaces your current data.",
+        )
+      ) {
+        return;
+      }
+
+      saveData(KEYS.inventory, data.inventory);
+      saveData(KEYS.officers, data.officers);
+      if (data.events) saveData(KEYS.events, data.events);
+      if (data.activity) saveData(KEYS.activity, data.activity.slice(0, 10));
+
+      sessionStorage.setItem("itpc_flash", "Backup restored.");
+      window.location.reload();
+    };
+    reader.readAsText(file);
+  });
+}
+
+// ============================================================
+// K. PRINTABLE REPORT (report.html)
+// A clean, light-themed summary of everything. "Print / Save as PDF"
+// uses the browser's print dialog; the toolbar is hidden by print CSS.
+// ============================================================
+function reportTable(headers, rows, emptyText) {
+  if (rows.length === 0) return '<p class="report-empty">' + escapeHTML(emptyText) + "</p>";
+
+  const head = headers.map((h) => "<th>" + escapeHTML(h) + "</th>").join("");
+  const body = rows
+    .map((cells) => "<tr>" + cells.map((c) => "<td>" + c + "</td>").join("") + "</tr>")
+    .join("");
+  return "<table><thead><tr>" + head + "</tr></thead><tbody>" + body + "</tbody></table>";
+}
+
+function setupReportPage() {
+  const root = document.getElementById("report");
+  if (!root) return;
+
+  const items = loadData(KEYS.inventory, DEFAULT_INVENTORY);
+  const officers = loadData(KEYS.officers, DEFAULT_OFFICERS);
+  const events = loadData(KEYS.events, DEFAULT_EVENTS);
+  const todayKey = toDateKey(new Date());
+
+  const lowItems = items
+    .filter((item) => getInventoryStatus(item) === "low")
+    .sort((a, b) => a.quantity - b.quantity);
+  const upcoming = sortEventsByDate(events.filter((e) => e.date >= todayKey));
+  const activeCount = officers.filter((o) => o.status === "active").length;
+  const totalUnits = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  document.getElementById("reportMeta").textContent =
+    "Generated " +
+    new Date().toLocaleString([], { dateStyle: "long", timeStyle: "short" }) +
+    " by " + (sessionStorage.getItem("userName") || "Guest");
+
+  const stats = [
+    ["Inventory items", items.length],
+    ["Total units", totalUnits],
+    ["Low stock", lowItems.length],
+    ["Active officers", activeCount + " / " + officers.length],
+    ["Upcoming events", upcoming.length],
+  ];
+  document.getElementById("reportStats").innerHTML = stats
+    .map((s) => "<div><b>" + escapeHTML(s[1]) + "</b><span>" + escapeHTML(s[0]) + "</span></div>")
+    .join("");
+
+  const stockLabel = (item) => (item.quantity === 0 ? "Out of stock" : getInventoryStatus(item) === "low" ? "Low stock" : "In stock");
+  const stockCell = (item) =>
+    getInventoryStatus(item) === "low"
+      ? '<strong class="r-low">' + stockLabel(item) + "</strong>"
+      : stockLabel(item);
+
+  document.getElementById("reportLow").innerHTML = reportTable(
+    ["Item", "Category", "Quantity"],
+    lowItems.map((item) => [escapeHTML(item.name), escapeHTML(CATEGORY_LABELS[item.category]), String(item.quantity)]),
+    "No items are at or below the low-stock limit (" + LOW_STOCK_LIMIT + ").",
+  );
+
+  document.getElementById("reportInventory").innerHTML = reportTable(
+    ["Item", "Category", "Quantity", "Status"],
+    items
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((item) => [escapeHTML(item.name), escapeHTML(CATEGORY_LABELS[item.category]), String(item.quantity), stockCell(item)]),
+    "No inventory items.",
+  );
+
+  document.getElementById("reportOfficers").innerHTML = reportTable(
+    ["Name", "Position", "Committee", "Status"],
+    officers
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map((o) => [
+        escapeHTML(o.name),
+        escapeHTML(POSITION_LABELS[o.position]),
+        escapeHTML(o.committee),
+        o.status === "active" ? "Active" : "Inactive",
+      ]),
+    "No officers.",
+  );
+
+  document.getElementById("reportEvents").innerHTML = reportTable(
+    ["Date", "Time", "Event", "Location", "Type"],
+    upcoming.map((e) => [
+      escapeHTML(formatEventDate(e.date)),
+      escapeHTML(formatEventTime(e.time)),
+      escapeHTML(e.title),
+      escapeHTML(e.location),
+      escapeHTML(EVENT_TYPE_LABELS[e.type]),
+    ]),
+    "No upcoming events.",
+  );
+
+  document.getElementById("printBtn").addEventListener("click", () => window.print());
+}
+
+// ============================================================
+// H. THEME (light / dark)
+// The saved choice is applied by a tiny script in each page's <head>
+// (so there's no flash). This only handles the toggle button.
+// ============================================================
+function setupThemeToggle() {
+  const button = document.getElementById("themeToggle");
+  if (!button) return;
+
+  const root = document.documentElement;
+  const isLight = () => root.getAttribute("data-theme") === "light";
+
+  button.setAttribute("aria-pressed", isLight());
+
+  button.addEventListener("click", () => {
+    const next = isLight() ? "dark" : "light";
+    root.setAttribute("data-theme", next);
+    localStorage.setItem("itpc_theme", next);
+    button.setAttribute("aria-pressed", isLight());
   });
 }
 
@@ -1068,11 +1832,15 @@ document.addEventListener("DOMContentLoaded", () => {
   applyRole();
   showUserInSidebar();
   highlightActiveNav();
+  setupThemeToggle();
   setupLoginForm();
   setupLoginSpotlight();
   setupLogout();
   setupModalClosing();
   setupInventoryPage();
   setupOfficersPage();
+  setupEventsPage();
   setupDashboard();
+  setupBackupPanel();
+  setupReportPage();
 });

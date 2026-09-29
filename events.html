@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ITPC — Officers</title>
+    <title>ITPC — Events</title>
     <link rel="icon" type="image/png" href="assets/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -108,69 +108,50 @@
       <main class="main-content">
         <div class="page-header">
           <div>
-            <h1>Officers</h1>
-            <p>See current officers, their committee, and status.</p>
+            <h1>Events</h1>
+            <p>Plan meetings, workshops and council activities.</p>
           </div>
-          <button class="btn btn-primary admin-only" id="addOfficerBtn">
-            + Add officer
+          <button class="btn btn-primary admin-only" id="addEventBtn">
+            + Add event
           </button>
         </div>
 
-        <div class="toolbar">
-          <div class="search-wrap">
-            <input
-              type="text"
-              id="searchInput"
-              placeholder="Search officers..."
-              aria-label="Search officers"
-            />
-            <kbd aria-hidden="true">/</kbd>
-          </div>
-          <div class="toolbar-filters">
-            <select
-              id="positionFilter"
-              data-filter="position"
-              aria-label="Filter by position"
-            >
-              <option value="">All positions</option>
-              <option value="president">President</option>
-              <option value="committee-head">Committee head</option>
-              <option value="member">Member</option>
-            </select>
-            <select
-              id="statusFilter"
-              data-filter="status"
-              aria-label="Filter by status"
-            >
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-            <span
-              class="result-count"
-              id="resultCount"
-              aria-live="polite"
-            ></span>
-          </div>
-        </div>
+        <div class="events-layout">
+          <!-- Month calendar: cells are drawn by main.js -->
+          <section class="panel calendar" aria-label="Calendar">
+            <div class="cal-header">
+              <h2 id="calMonth" aria-live="polite"></h2>
+              <div class="cal-nav">
+                <button type="button" class="btn btn-secondary" id="calPrev" aria-label="Previous month">&lsaquo;</button>
+                <button type="button" class="btn btn-secondary" id="calToday">Today</button>
+                <button type="button" class="btn btn-secondary" id="calNext" aria-label="Next month">&rsaquo;</button>
+              </div>
+            </div>
+            <div class="cal-weekdays" aria-hidden="true">
+              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+            </div>
+            <div class="cal-grid" id="calendarGrid"></div>
+            <ul class="cal-legend" aria-hidden="true">
+              <li><i class="dot type-meeting"></i>Meeting</li>
+              <li><i class="dot type-workshop"></i>Workshop</li>
+              <li><i class="dot type-seminar"></i>Seminar</li>
+              <li><i class="dot type-social"></i>Social</li>
+            </ul>
+          </section>
 
-        <div class="panel">
-          <table>
-            <thead>
-              <tr>
-                <th data-sort="name">Name</th>
-                <th data-sort="position">Position</th>
-                <th data-sort="committee">Committee</th>
-                <th data-sort="status">Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="officerTableBody"></tbody>
-          </table>
-          <div class="empty-state" id="emptyState" hidden>
-            <strong>No officers found</strong>
-            Try a different search or filter.
-          </div>
+          <section class="panel" aria-label="Event list">
+            <div class="panel-header">
+              <h2 id="eventListTitle">Events this month</h2>
+              <button type="button" class="btn btn-secondary" id="clearDayBtn" hidden>
+                Show month
+              </button>
+            </div>
+            <ul class="event-list" id="eventList"></ul>
+            <div class="empty-state" id="eventsEmpty" hidden>
+              <strong>No events</strong>
+              Nothing scheduled here. Pick another day or month.
+            </div>
+          </section>
         </div>
       </main>
     </div>
@@ -190,37 +171,52 @@
       </div>
     </div>
 
-    <!-- Add / Edit officer modal (one form, two modes) -->
+    <!-- Add / Edit event modal (one form, two modes) -->
     <div
       class="modal-overlay"
-      id="addOfficerModal"
+      id="eventModal"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="addOfficerTitle"
+      aria-labelledby="eventFormTitle"
     >
       <div class="modal-box">
         <button class="modal-close" aria-label="Close">&times;</button>
-        <h2 id="addOfficerTitle">Add officer</h2>
-        <form id="addOfficerForm" novalidate>
+        <h2 id="eventFormTitle">Add event</h2>
+        <form id="eventForm" novalidate>
           <div class="form-field">
-            <label for="officerName">Name</label>
-            <input type="text" id="officerName" name="officerName" />
+            <label for="eventTitle">Title</label>
+            <input type="text" id="eventTitle" name="eventTitle" />
+          </div>
+          <div class="form-row">
+            <div class="form-field">
+              <label for="eventDate">Date</label>
+              <input type="date" id="eventDate" name="eventDate" />
+            </div>
+            <div class="form-field">
+              <label for="eventTime">Time (optional)</label>
+              <input type="time" id="eventTime" name="eventTime" />
+            </div>
           </div>
           <div class="form-field">
-            <label for="officerPosition">Position</label>
-            <select id="officerPosition" name="officerPosition">
-              <option value="president">President</option>
-              <option value="committee-head">Committee head</option>
-              <option value="member">Member</option>
+            <label for="eventType">Type</label>
+            <select id="eventType" name="eventType">
+              <option value="meeting">Meeting</option>
+              <option value="workshop">Workshop</option>
+              <option value="seminar">Seminar</option>
+              <option value="social">Social</option>
             </select>
           </div>
           <div class="form-field">
-            <label for="officerCommittee">Committee</label>
-            <input type="text" id="officerCommittee" name="officerCommittee" />
+            <label for="eventLocation">Location</label>
+            <input type="text" id="eventLocation" name="eventLocation" />
           </div>
-          <p id="addOfficerError" class="form-error" hidden></p>
-          <button type="submit" class="btn btn-primary" id="addOfficerSubmit">
-            Add officer
+          <div class="form-field">
+            <label for="eventDescription">Description (optional)</label>
+            <textarea id="eventDescription" name="eventDescription" rows="3"></textarea>
+          </div>
+          <p id="eventError" class="form-error" hidden></p>
+          <button type="submit" class="btn btn-primary" id="eventSubmit">
+            Add event
           </button>
         </form>
       </div>
