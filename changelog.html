@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ITPC — Officers</title>
+    <title>ITPC — Change log</title>
     <link rel="icon" type="image/png" href="assets/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -74,8 +74,6 @@
               >Events</a
             >
           </li>
-<<<<<<< Updated upstream
-=======
           <li>
             <a href="changelog.html"
               ><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -84,7 +82,6 @@
               >Change log</a
             >
           </li>
->>>>>>> Stashed changes
         </ul>
 
         <div class="sidebar-footer">
@@ -119,122 +116,63 @@
       <main class="main-content">
         <div class="page-header">
           <div>
-            <h1>Officers</h1>
-            <p>See current officers, their committee, and status.</p>
+            <h1>Change log</h1>
+            <p>Who changed what, and when. Newest first.</p>
           </div>
-          <button class="btn btn-primary admin-only" id="addOfficerBtn">
-            + Add officer
-          </button>
+          <button class="btn btn-secondary" id="logExportBtn">Export CSV</button>
         </div>
 
         <div class="toolbar">
           <div class="search-wrap">
-            <input
-              type="text"
-              id="searchInput"
-              placeholder="Search officers..."
-              aria-label="Search officers"
-            />
-            <kbd aria-hidden="true">/</kbd>
+            <input type="text" id="logSearch" placeholder="Search item, change or person..." aria-label="Search the change log" />
           </div>
           <div class="toolbar-filters">
-            <select
-              id="positionFilter"
-              data-filter="position"
-              aria-label="Filter by position"
-            >
-              <option value="">All positions</option>
-              <option value="president">President</option>
-              <option value="committee-head">Committee head</option>
-              <option value="member">Member</option>
+            <select id="logModule" aria-label="Filter by module">
+              <option value="">All modules</option>
+              <option value="inventory">Inventory</option>
+              <option value="officers">Officers</option>
+              <option value="events">Events</option>
+              <option value="system">System</option>
             </select>
-            <select
-              id="statusFilter"
-              data-filter="status"
-              aria-label="Filter by status"
-            >
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+            <select id="logAction" aria-label="Filter by action">
+              <option value="">All actions</option>
+              <option value="add">Added</option>
+              <option value="edit">Edited</option>
+              <option value="delete">Deleted</option>
+              <option value="restore">Restored</option>
+              <option value="reset">Reset</option>
             </select>
-            <span
-              class="result-count"
-              id="resultCount"
-              aria-live="polite"
-            ></span>
+            <select id="logUser" aria-label="Filter by person">
+              <option value="">Everyone</option>
+            </select>
+            <label class="log-date">From <input type="date" id="logFrom" aria-label="From date" /></label>
+            <label class="log-date">To <input type="date" id="logTo" aria-label="To date" /></label>
+            <button type="button" class="btn btn-secondary" id="logClear" hidden>Clear filters</button>
+            <span class="result-count" id="logCount" aria-live="polite"></span>
           </div>
         </div>
 
         <div class="panel">
-          <table>
-            <thead>
-              <tr>
-                <th data-sort="name">Name</th>
-                <th data-sort="position">Position</th>
-                <th data-sort="committee">Committee</th>
-                <th data-sort="status">Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody id="officerTableBody"></tbody>
-          </table>
-          <div class="empty-state" id="emptyState" hidden>
-            <strong>No officers found</strong>
-            Try a different search or filter.
+          <div class="table-scroll">
+            <table id="logTable">
+              <thead>
+                <tr>
+                  <th>When</th>
+                  <th>Who</th>
+                  <th>Module</th>
+                  <th>Action</th>
+                  <th>Change</th>
+                </tr>
+              </thead>
+              <tbody id="logBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="logEmpty" hidden>
+            <strong>No changes found</strong>
+            <span></span>
           </div>
         </div>
       </main>
-    </div>
-
-    <!-- Detail modal: title and list are filled in by main.js -->
-    <div
-      class="modal-overlay"
-      id="viewModal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="viewModalTitle"
-    >
-      <div class="modal-box">
-        <button class="modal-close" aria-label="Close">&times;</button>
-        <h2 id="viewModalTitle">Details</h2>
-        <ul id="viewModalBody"></ul>
-      </div>
-    </div>
-
-    <!-- Add / Edit officer modal (one form, two modes) -->
-    <div
-      class="modal-overlay"
-      id="addOfficerModal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="addOfficerTitle"
-    >
-      <div class="modal-box">
-        <button class="modal-close" aria-label="Close">&times;</button>
-        <h2 id="addOfficerTitle">Add officer</h2>
-        <form id="addOfficerForm" novalidate>
-          <div class="form-field">
-            <label for="officerName">Name</label>
-            <input type="text" id="officerName" name="officerName" />
-          </div>
-          <div class="form-field">
-            <label for="officerPosition">Position</label>
-            <select id="officerPosition" name="officerPosition">
-              <option value="president">President</option>
-              <option value="committee-head">Committee head</option>
-              <option value="member">Member</option>
-            </select>
-          </div>
-          <div class="form-field">
-            <label for="officerCommittee">Committee</label>
-            <input type="text" id="officerCommittee" name="officerCommittee" />
-          </div>
-          <p id="addOfficerError" class="form-error" hidden></p>
-          <button type="submit" class="btn btn-primary" id="addOfficerSubmit">
-            Add officer
-          </button>
-        </form>
-      </div>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

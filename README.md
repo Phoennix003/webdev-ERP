@@ -79,3 +79,13 @@ Backup and report
 - "Restore from backup" validates the file first (wrong app, bad quantities, duplicate ids are rejected and nothing changes), asks for confirmation, then replaces the current data. Admin only. Older backups without events still restore
 - "Print report" opens report.html: a light-themed summary (stats, low stock, inventory, officers, upcoming events) for Print / Save as PDF
 
+<<<<<<< Updated upstream
+=======
+Change log
+
+- Every add, edit and delete on Inventory, Officers and Events is recorded with the user, role, exact date/time and the before/after value of each changed field (the full history is kept, up to 1,000 entries; the Dashboard's Recent activity still shows just the last 10)
+- Change log page: search, filter by module, action, person and date range, and export what is shown as CSV
+- Restores and demo-data resets are logged too. The log is included in backups; Reset demo data clears it
+- Visible to everyone (read-only). Note: it lives in the browser like the rest of the data, so it is a demo audit trail, not tamper-proof
+
+>>>>>>> Stashed changes

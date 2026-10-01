@@ -11,6 +11,10 @@
 //                                 G. Dashboard
 //   I. Events + calendar (Events page and Dashboard widget)
 //   J. Backup & restore (JSON)      K. Printable report
+<<<<<<< Updated upstream
+=======
+//   L. Change log page (the audit trail itself is recorded by recordChange)
+>>>>>>> Stashed changes
 // ============================================================
 
 // ============================================================
@@ -24,6 +28,10 @@ const KEYS = {
   officers: "itpc_officers",
   activity: "itpc_activity",
   events: "itpc_events",
+<<<<<<< Updated upstream
+=======
+  changelog: "itpc_changelog", // full audit trail (who changed what, when)
+>>>>>>> Stashed changes
   lastBackup: "itpc_last_backup", // when a backup was last downloaded (not part of the backup)
 };
 
@@ -217,6 +225,91 @@ function logActivity(message, type) {
     time: new Date().toISOString(),
   });
   saveData(KEYS.activity, entries.slice(0, 10)); // keep only the latest 10
+}
+
+// ---------- Change log (audit trail) ----------
+// Unlike the dashboard's "Recent activity" (last 10 lines), this keeps the
+// full history: WHO made the change, WHEN, and the before/after values.
+const CHANGELOG_LIMIT = 1000; // oldest entries are dropped beyond this
+
+// Which fields are recorded for each module, with a friendly label and an
+// optional formatter so the log stores readable text ("Office supplies"),
+// not internal codes ("office-supplies").
+const CHANGE_FIELDS = {
+  inventory: [
+    ["name", "Name"],
+    ["category", "Category", (v) => CATEGORY_LABELS[v] || v],
+    ["quantity", "Quantity"],
+  ],
+  officers: [
+    ["name", "Name"],
+    ["position", "Position", (v) => POSITION_LABELS[v] || v],
+    ["committee", "Committee"],
+    ["status", "Status", (v) => (v === "active" ? "Active" : "Inactive")],
+  ],
+  events: [
+    ["title", "Title"],
+    ["date", "Date", (v) => formatEventDate(v)],
+    ["time", "Time", (v) => formatEventTime(v)],
+    ["type", "Type", (v) => EVENT_TYPE_LABELS[v] || v],
+    ["location", "Location"],
+    ["description", "Description"],
+  ],
+};
+
+function currentUser() {
+  return {
+    name: sessionStorage.getItem("userName") || "Unknown",
+    role: sessionStorage.getItem("userRole") || "unknown",
+  };
+}
+
+// Turns a stored value into the text kept in the log (capped so a huge
+// description can't bloat localStorage)
+function logValue(field, value) {
+  const text = String(field[2] ? field[2](value) : value);
+  return text.length > 300 ? text.slice(0, 300) + "…" : text;
+}
+
+function writeChangeLog(module, action, target, details) {
+  const entries = loadData(KEYS.changelog, []);
+  const user = currentUser();
+  entries.unshift({
+    id: nextId(entries),
+    time: new Date().toISOString(),
+    user: user.name,
+    role: user.role,
+    module: module,
+    action: action,
+    target: target,
+    details: details,
+  });
+  saveData(KEYS.changelog, entries.slice(0, CHANGELOG_LIMIT));
+}
+
+// One call per change. `before` / `after` are copies of the record
+// (null for add / delete). Also writes the dashboard's activity line.
+// Returns false (and logs nothing) when an edit changed nothing.
+function recordChange(module, action, before, after, message) {
+  const fields = CHANGE_FIELDS[module];
+  const record = after || before;
+  const target = module === "events" ? record.title : record.name;
+  const details = [];
+
+  fields.forEach((field) => {
+    const key = field[0];
+    const oldText = before && before[key] !== undefined && before[key] !== "" ? logValue(field, before[key]) : null;
+    const newText = after && after[key] !== undefined && after[key] !== "" ? logValue(field, after[key]) : null;
+    if (action === "edit" && oldText === newText) return; // unchanged field
+    if (oldText === null && newText === null) return; // empty optional field
+    details.push({ field: field[1], from: oldText, to: newText });
+  });
+
+  if (action === "edit" && details.length === 0) return false;
+
+  writeChangeLog(module, action, target, details);
+  logActivity(message, action);
+  return true;
 }
 
 // ============================================================
@@ -737,7 +830,7 @@ function setupInventoryPage() {
 
       items = items.filter((entry) => entry.id !== id); // keep everything except this one
       saveData(KEYS.inventory, items);
-      logActivity('Deleted item "' + item.name + '"', "delete");
+      recordChange("inventory", "delete", item, null, 'Deleted item "' + item.name + '"');
       render();
       showToast("Item deleted.");
     }
@@ -782,21 +875,23 @@ function setupInventoryPage() {
 
     if (editingId === null) {
       // ADD
-      items.push({
+      const created = {
         id: nextId(items),
         name: name,
         category: category,
         quantity: quantity,
-      });
-      logActivity('Added item "' + name + '" (' + quantity + ")", "add");
+      };
+      items.push(created);
+      recordChange("inventory", "add", null, created, 'Added item "' + name + '" (' + quantity + ")");
       showToast("Item added successfully.");
     } else {
       // EDIT
       const item = items.find((entry) => entry.id === editingId);
+      const before = { ...item }; // copy so the log can show old vs new
       item.name = name;
       item.category = category;
       item.quantity = quantity;
-      logActivity('Edited item "' + name + '"', "edit");
+      recordChange("inventory", "edit", before, item, 'Edited item "' + name + '"');
       showToast("Changes saved.");
     }
 
@@ -929,9 +1024,10 @@ function setupOfficersPage() {
     }
 
     if (link.classList.contains("toggle-link")) {
+      const before = { ...officer };
       officer.status = officer.status === "active" ? "inactive" : "active";
       saveData(KEYS.officers, officers);
-      logActivity("Set " + officer.name + " to " + officer.status, "edit");
+      recordChange("officers", "edit", before, officer, "Set " + officer.name + " to " + officer.status);
       render();
       showToast(officer.name + " is now " + officer.status + ".");
     }
@@ -941,7 +1037,7 @@ function setupOfficersPage() {
 
       officers = officers.filter((entry) => entry.id !== id);
       saveData(KEYS.officers, officers);
-      logActivity('Deleted officer "' + officer.name + '"', "delete");
+      recordChange("officers", "delete", officer, null, 'Deleted officer "' + officer.name + '"');
       render();
       showToast("Officer deleted.");
     }
@@ -980,22 +1076,24 @@ function setupOfficersPage() {
 
     if (editingId === null) {
       // ADD (new officers start as active)
-      officers.push({
+      const created = {
         id: nextId(officers),
         name: name,
         position: position,
         committee: committee,
         status: "active",
-      });
-      logActivity('Added officer "' + name + '"', "add");
+      };
+      officers.push(created);
+      recordChange("officers", "add", null, created, 'Added officer "' + name + '"');
       showToast("Officer added successfully.");
     } else {
       // EDIT
       const officer = officers.find((entry) => entry.id === editingId);
+      const before = { ...officer };
       officer.name = name;
       officer.position = position;
       officer.committee = committee;
-      logActivity('Edited officer "' + name + '"', "edit");
+      recordChange("officers", "edit", before, officer, 'Edited officer "' + name + '"');
       showToast("Changes saved.");
     }
 
@@ -1177,7 +1275,11 @@ function setupDashboard() {
     if (!isAdmin()) return;
     if (
       !window.confirm(
+<<<<<<< Updated upstream
         "Reset inventory, officers, events and activity to the sample data?",
+=======
+        "Reset inventory, officers, events, activity and the change log to the sample data?",
+>>>>>>> Stashed changes
       )
     )
       return;
@@ -1186,6 +1288,12 @@ function setupDashboard() {
     localStorage.removeItem(KEYS.officers);
     localStorage.removeItem(KEYS.activity);
     localStorage.removeItem(KEYS.events);
+<<<<<<< Updated upstream
+=======
+    localStorage.removeItem(KEYS.changelog);
+    // Start the fresh log with who did the reset
+    writeChangeLog("system", "reset", "Demo data reset", []);
+>>>>>>> Stashed changes
     window.location.reload();
   });
 }
@@ -1413,6 +1521,7 @@ function setupEventsPage() {
     const data = { title, date, time, type, location, description };
 
     if (editingId === null) {
+<<<<<<< Updated upstream
       events.push({ id: nextId(events), ...data });
       logActivity('Added event "' + title + '"', "add");
       showToast("Event added.");
@@ -1420,6 +1529,17 @@ function setupEventsPage() {
       const existing = events.find((entry) => entry.id === editingId);
       Object.assign(existing, data);
       logActivity('Edited event "' + title + '"', "edit");
+=======
+      const created = { id: nextId(events), ...data };
+      events.push(created);
+      recordChange("events", "add", null, created, 'Added event "' + title + '"');
+      showToast("Event added.");
+    } else {
+      const existing = events.find((entry) => entry.id === editingId);
+      const before = { ...existing };
+      Object.assign(existing, data);
+      recordChange("events", "edit", before, existing, 'Edited event "' + title + '"');
+>>>>>>> Stashed changes
       showToast("Changes saved.");
     }
     saveData(KEYS.events, events);
@@ -1464,7 +1584,11 @@ function setupEventsPage() {
       if (!window.confirm('Delete "' + item.title + '"?')) return;
       events = events.filter((entry) => entry.id !== id);
       saveData(KEYS.events, events);
+<<<<<<< Updated upstream
       logActivity('Deleted event "' + item.title + '"', "delete");
+=======
+      recordChange("events", "delete", item, null, 'Deleted event "' + item.title + '"');
+>>>>>>> Stashed changes
       render();
       showToast("Event deleted.");
     }
@@ -1528,6 +1652,10 @@ function buildBackup() {
       officers: loadData(KEYS.officers, DEFAULT_OFFICERS),
       events: loadData(KEYS.events, DEFAULT_EVENTS),
       activity: loadData(KEYS.activity, []),
+<<<<<<< Updated upstream
+=======
+      changelog: loadData(KEYS.changelog, []),
+>>>>>>> Stashed changes
     },
   };
 }
@@ -1600,6 +1728,25 @@ function validateBackup(backup) {
     data.activity === undefined
       ? null
       : checkList(data.activity, "Activity", (e) => isText(e.message) && isText(e.time), false),
+<<<<<<< Updated upstream
+=======
+    data.changelog === undefined
+      ? null
+      : checkList(
+          data.changelog,
+          "Change log",
+          (e) =>
+            isText(e.time) && isText(e.user) && isText(e.role) &&
+            isText(e.module) && isText(e.action) && isText(e.target) &&
+            Array.isArray(e.details) &&
+            e.details.every(
+              (d) =>
+                d && isText(d.field) &&
+                (d.from === null || isText(d.from)) && (d.to === null || isText(d.to)),
+            ),
+          true,
+        ),
+>>>>>>> Stashed changes
   ].find((message) => message !== null);
 
   return problems ? { error: problems } : { data: data };
@@ -1697,6 +1844,15 @@ function setupBackupPanel() {
       saveData(KEYS.officers, data.officers);
       if (data.events) saveData(KEYS.events, data.events);
       if (data.activity) saveData(KEYS.activity, data.activity.slice(0, 10));
+<<<<<<< Updated upstream
+=======
+      // Old backups have no change log: keep the current one instead of wiping it
+      if (data.changelog) saveData(KEYS.changelog, data.changelog.slice(0, CHANGELOG_LIMIT));
+      writeChangeLog("system", "restore", "Backup restored", [
+        { field: "Restored", from: null, to: counts },
+        { field: "Backup made", from: null, to: backup.exportedAt ? formatTime(backup.exportedAt) : "unknown" },
+      ]);
+>>>>>>> Stashed changes
 
       sessionStorage.setItem("itpc_flash", "Backup restored.");
       window.location.reload();
@@ -1803,6 +1959,156 @@ function setupReportPage() {
 }
 
 // ============================================================
+<<<<<<< Updated upstream
+=======
+// L. CHANGE LOG PAGE (changelog.html)
+// Read-only view of the audit trail: newest first, filterable, CSV export.
+// ============================================================
+const ACTION_LABELS = {
+  add: "Added",
+  edit: "Edited",
+  delete: "Deleted",
+  restore: "Restored",
+  reset: "Reset",
+};
+const MODULE_LABELS = {
+  inventory: "Inventory",
+  officers: "Officers",
+  events: "Events",
+  system: "System",
+};
+
+function formatFullTime(isoString) {
+  return new Date(isoString).toLocaleString([], { dateStyle: "medium", timeStyle: "medium" });
+}
+
+// One line per changed field, as plain text (used for search and CSV)
+function changeDetailsText(entry) {
+  return entry.details
+    .map((d) => {
+      if (d.from !== null && d.to !== null) return d.field + ": " + d.from + " → " + d.to;
+      if (d.to !== null) return d.field + ": " + d.to;
+      return d.field + ": " + d.from;
+    })
+    .join("; ");
+}
+
+// A spreadsheet treats cells starting with = + - @ as formulas, so a name
+// like "=HYPERLINK(...)" typed into the app could run when the CSV is opened.
+function csvCell(value) {
+  let text = String(value);
+  if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+  return '"' + text.replace(/"/g, '""') + '"';
+}
+
+function changeDetailsHTML(entry) {
+  if (entry.details.length === 0) return "";
+  return (
+    '<ul class="change-details">' +
+    entry.details
+      .map((d) => {
+        const label = "<b>" + escapeHTML(d.field) + "</b> ";
+        if (d.from !== null && d.to !== null) {
+          return "<li>" + label + "<del>" + escapeHTML(d.from) + "</del> → <ins>" + escapeHTML(d.to) + "</ins></li>";
+        }
+        return "<li>" + label + escapeHTML(d.to !== null ? d.to : d.from) + "</li>";
+      })
+      .join("") +
+    "</ul>"
+  );
+}
+
+function setupChangelogPage() {
+  const body = document.getElementById("logBody");
+  if (!body) return;
+
+  const entries = loadData(KEYS.changelog, []); // already newest first
+  const searchEl = document.getElementById("logSearch");
+  const moduleEl = document.getElementById("logModule");
+  const actionEl = document.getElementById("logAction");
+  const userEl = document.getElementById("logUser");
+  const fromEl = document.getElementById("logFrom");
+  const toEl = document.getElementById("logTo");
+  const countEl = document.getElementById("logCount");
+  const emptyEl = document.getElementById("logEmpty");
+  const tableEl = document.getElementById("logTable");
+  const clearEl = document.getElementById("logClear");
+  let shown = [];
+
+  // Fill the "Who" dropdown with the people who actually appear in the log
+  const names = [...new Set(entries.map((e) => e.user))].sort((a, b) => a.localeCompare(b));
+  names.forEach((name) => {
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name;
+    userEl.appendChild(option);
+  });
+
+  function render() {
+    const term = searchEl.value.trim().toLowerCase();
+    shown = entries.filter((e) => {
+      if (moduleEl.value && e.module !== moduleEl.value) return false;
+      if (actionEl.value && e.action !== actionEl.value) return false;
+      if (userEl.value && e.user !== userEl.value) return false;
+      const day = toDateKey(new Date(e.time)); // local date, same as the stamps shown
+      if (fromEl.value && day < fromEl.value) return false;
+      if (toEl.value && day > toEl.value) return false;
+      if (term && (e.target + " " + changeDetailsText(e) + " " + e.user).toLowerCase().indexOf(term) === -1) return false;
+      return true;
+    });
+
+    body.innerHTML = shown
+      .map(
+        (e) => `
+      <tr>
+        <td class="log-when"><time datetime="${escapeHTML(e.time)}">${escapeHTML(formatFullTime(e.time))}</time></td>
+        <td><strong>${escapeHTML(e.user)}</strong><small class="log-role">${e.role === "admin" ? "Administrator" : "Member"}</small></td>
+        <td>${escapeHTML(MODULE_LABELS[e.module] || e.module)}</td>
+        <td><span class="log-action is-${escapeHTML(e.action)}">${escapeHTML(ACTION_LABELS[e.action] || e.action)}</span></td>
+        <td><strong>${escapeHTML(e.target)}</strong>${changeDetailsHTML(e)}</td>
+      </tr>`,
+      )
+      .join("");
+
+    countEl.textContent = shown.length + " of " + entries.length + " entries";
+    // Show "Clear filters" whenever ANY filter is set, even one that matches everything
+    const anyFilter = [searchEl, moduleEl, actionEl, userEl, fromEl, toEl].some((el) => el.value !== "");
+    clearEl.hidden = !anyFilter;
+    tableEl.hidden = shown.length === 0;
+    emptyEl.hidden = shown.length > 0;
+    emptyEl.querySelector("span").textContent =
+      entries.length === 0
+        ? "Changes made on the Inventory, Officers and Events pages will appear here."
+        : "Try a different search or filter.";
+  }
+
+  [searchEl, moduleEl, actionEl, userEl, fromEl, toEl].forEach((el) => {
+    el.addEventListener(el === searchEl ? "input" : "change", render);
+  });
+  clearEl.addEventListener("click", () => {
+    searchEl.value = "";
+    [moduleEl, actionEl, userEl, fromEl, toEl].forEach((el) => (el.value = ""));
+    render();
+  });
+
+  // Exports what is currently shown (so filters apply to the CSV too)
+  document.getElementById("logExportBtn").addEventListener("click", () => {
+    const header = ["Date and time", "User", "Role", "Module", "Action", "Item", "Changes"];
+    const rows = shown.map((e) => [
+      e.time, e.user, e.role, MODULE_LABELS[e.module] || e.module,
+      ACTION_LABELS[e.action] || e.action, e.target, changeDetailsText(e),
+    ]);
+    const csv = [header].concat(rows).map((row) => row.map(csvCell).join(",")).join("\r\n");
+    // The leading \ufeff makes Excel read the file as UTF-8 (keeps the → arrows intact)
+    downloadFile("itpc-erp-change-log-" + toDateKey(new Date()) + ".csv", "\ufeff" + csv, "text/csv;charset=utf-8");
+    showToast("Exported " + shown.length + " entries.");
+  });
+
+  render();
+}
+
+// ============================================================
+>>>>>>> Stashed changes
 // H. THEME (light / dark)
 // The saved choice is applied by a tiny script in each page's <head>
 // (so there's no flash). This only handles the toggle button.
@@ -1843,4 +2149,8 @@ document.addEventListener("DOMContentLoaded", () => {
   setupDashboard();
   setupBackupPanel();
   setupReportPage();
+<<<<<<< Updated upstream
+=======
+  setupChangelogPage();
+>>>>>>> Stashed changes
 });
