@@ -11,10 +11,7 @@
 //                                 G. Dashboard
 //   I. Events + calendar (Events page and Dashboard widget)
 //   J. Backup & restore (JSON)      K. Printable report
-<<<<<<< Updated upstream
-=======
 //   L. Change log page (the audit trail itself is recorded by recordChange)
->>>>>>> Stashed changes
 // ============================================================
 
 // ============================================================
@@ -28,10 +25,7 @@ const KEYS = {
   officers: "itpc_officers",
   activity: "itpc_activity",
   events: "itpc_events",
-<<<<<<< Updated upstream
-=======
   changelog: "itpc_changelog", // full audit trail (who changed what, when)
->>>>>>> Stashed changes
   lastBackup: "itpc_last_backup", // when a backup was last downloaded (not part of the backup)
 };
 
@@ -298,8 +292,14 @@ function recordChange(module, action, before, after, message) {
 
   fields.forEach((field) => {
     const key = field[0];
-    const oldText = before && before[key] !== undefined && before[key] !== "" ? logValue(field, before[key]) : null;
-    const newText = after && after[key] !== undefined && after[key] !== "" ? logValue(field, after[key]) : null;
+    const oldText =
+      before && before[key] !== undefined && before[key] !== ""
+        ? logValue(field, before[key])
+        : null;
+    const newText =
+      after && after[key] !== undefined && after[key] !== ""
+        ? logValue(field, after[key])
+        : null;
     if (action === "edit" && oldText === newText) return; // unchanged field
     if (oldText === null && newText === null) return; // empty optional field
     details.push({ field: field[1], from: oldText, to: newText });
@@ -830,7 +830,13 @@ function setupInventoryPage() {
 
       items = items.filter((entry) => entry.id !== id); // keep everything except this one
       saveData(KEYS.inventory, items);
-      recordChange("inventory", "delete", item, null, 'Deleted item "' + item.name + '"');
+      recordChange(
+        "inventory",
+        "delete",
+        item,
+        null,
+        'Deleted item "' + item.name + '"',
+      );
       render();
       showToast("Item deleted.");
     }
@@ -882,7 +888,13 @@ function setupInventoryPage() {
         quantity: quantity,
       };
       items.push(created);
-      recordChange("inventory", "add", null, created, 'Added item "' + name + '" (' + quantity + ")");
+      recordChange(
+        "inventory",
+        "add",
+        null,
+        created,
+        'Added item "' + name + '" (' + quantity + ")",
+      );
       showToast("Item added successfully.");
     } else {
       // EDIT
@@ -891,7 +903,13 @@ function setupInventoryPage() {
       item.name = name;
       item.category = category;
       item.quantity = quantity;
-      recordChange("inventory", "edit", before, item, 'Edited item "' + name + '"');
+      recordChange(
+        "inventory",
+        "edit",
+        before,
+        item,
+        'Edited item "' + name + '"',
+      );
       showToast("Changes saved.");
     }
 
@@ -1027,7 +1045,13 @@ function setupOfficersPage() {
       const before = { ...officer };
       officer.status = officer.status === "active" ? "inactive" : "active";
       saveData(KEYS.officers, officers);
-      recordChange("officers", "edit", before, officer, "Set " + officer.name + " to " + officer.status);
+      recordChange(
+        "officers",
+        "edit",
+        before,
+        officer,
+        "Set " + officer.name + " to " + officer.status,
+      );
       render();
       showToast(officer.name + " is now " + officer.status + ".");
     }
@@ -1037,7 +1061,13 @@ function setupOfficersPage() {
 
       officers = officers.filter((entry) => entry.id !== id);
       saveData(KEYS.officers, officers);
-      recordChange("officers", "delete", officer, null, 'Deleted officer "' + officer.name + '"');
+      recordChange(
+        "officers",
+        "delete",
+        officer,
+        null,
+        'Deleted officer "' + officer.name + '"',
+      );
       render();
       showToast("Officer deleted.");
     }
@@ -1084,7 +1114,13 @@ function setupOfficersPage() {
         status: "active",
       };
       officers.push(created);
-      recordChange("officers", "add", null, created, 'Added officer "' + name + '"');
+      recordChange(
+        "officers",
+        "add",
+        null,
+        created,
+        'Added officer "' + name + '"',
+      );
       showToast("Officer added successfully.");
     } else {
       // EDIT
@@ -1093,7 +1129,13 @@ function setupOfficersPage() {
       officer.name = name;
       officer.position = position;
       officer.committee = committee;
-      recordChange("officers", "edit", before, officer, 'Edited officer "' + name + '"');
+      recordChange(
+        "officers",
+        "edit",
+        before,
+        officer,
+        'Edited officer "' + name + '"',
+      );
       showToast("Changes saved.");
     }
 
@@ -1275,11 +1317,7 @@ function setupDashboard() {
     if (!isAdmin()) return;
     if (
       !window.confirm(
-<<<<<<< Updated upstream
-        "Reset inventory, officers, events and activity to the sample data?",
-=======
         "Reset inventory, officers, events, activity and the change log to the sample data?",
->>>>>>> Stashed changes
       )
     )
       return;
@@ -1288,12 +1326,9 @@ function setupDashboard() {
     localStorage.removeItem(KEYS.officers);
     localStorage.removeItem(KEYS.activity);
     localStorage.removeItem(KEYS.events);
-<<<<<<< Updated upstream
-=======
     localStorage.removeItem(KEYS.changelog);
     // Start the fresh log with who did the reset
     writeChangeLog("system", "reset", "Demo data reset", []);
->>>>>>> Stashed changes
     window.location.reload();
   });
 }
@@ -1387,7 +1422,8 @@ function setupEventsPage() {
         .slice(0, 3)
         .map((e) => `<i class="dot type-${escapeHTML(e.type)}"></i>`)
         .join("");
-      const more = dayEvents.length > 3 ? `<em>+${dayEvents.length - 3}</em>` : "";
+      const more =
+        dayEvents.length > 3 ? `<em>+${dayEvents.length - 3}</em>` : "";
       const label =
         key + (dayEvents.length ? ", " + dayEvents.length + " event(s)" : "");
 
@@ -1432,8 +1468,12 @@ function setupEventsPage() {
     selectedKey = null; // a selected day from another month makes no sense
     render();
   }
-  document.getElementById("calPrev").addEventListener("click", () => goToMonth(-1));
-  document.getElementById("calNext").addEventListener("click", () => goToMonth(1));
+  document
+    .getElementById("calPrev")
+    .addEventListener("click", () => goToMonth(-1));
+  document
+    .getElementById("calNext")
+    .addEventListener("click", () => goToMonth(1));
   document.getElementById("calToday").addEventListener("click", () => {
     const now = new Date();
     view.setFullYear(now.getFullYear(), now.getMonth(), 1);
@@ -1475,7 +1515,9 @@ function setupEventsPage() {
       : selectedKey || todayKey;
     document.getElementById("eventTime").value = event ? event.time : "";
     document.getElementById("eventType").value = event ? event.type : "meeting";
-    document.getElementById("eventLocation").value = event ? event.location : "";
+    document.getElementById("eventLocation").value = event
+      ? event.location
+      : "";
     document.getElementById("eventDescription").value = event
       ? event.description
       : "";
@@ -1497,7 +1539,9 @@ function setupEventsPage() {
     const time = document.getElementById("eventTime").value;
     const type = document.getElementById("eventType").value;
     const location = document.getElementById("eventLocation").value.trim();
-    const description = document.getElementById("eventDescription").value.trim();
+    const description = document
+      .getElementById("eventDescription")
+      .value.trim();
 
     if (title === "" || date === "" || location === "") {
       errorEl.textContent = "Title, date and location are required.";
@@ -1513,7 +1557,8 @@ function setupEventsPage() {
         entry.title.toLowerCase() === title.toLowerCase(),
     );
     if (duplicate) {
-      errorEl.textContent = "An event with this title already exists on that day.";
+      errorEl.textContent =
+        "An event with this title already exists on that day.";
       errorEl.hidden = false;
       return;
     }
@@ -1521,25 +1566,27 @@ function setupEventsPage() {
     const data = { title, date, time, type, location, description };
 
     if (editingId === null) {
-<<<<<<< Updated upstream
-      events.push({ id: nextId(events), ...data });
-      logActivity('Added event "' + title + '"', "add");
-      showToast("Event added.");
-    } else {
-      const existing = events.find((entry) => entry.id === editingId);
-      Object.assign(existing, data);
-      logActivity('Edited event "' + title + '"', "edit");
-=======
       const created = { id: nextId(events), ...data };
       events.push(created);
-      recordChange("events", "add", null, created, 'Added event "' + title + '"');
+      recordChange(
+        "events",
+        "add",
+        null,
+        created,
+        'Added event "' + title + '"',
+      );
       showToast("Event added.");
     } else {
       const existing = events.find((entry) => entry.id === editingId);
       const before = { ...existing };
       Object.assign(existing, data);
-      recordChange("events", "edit", before, existing, 'Edited event "' + title + '"');
->>>>>>> Stashed changes
+      recordChange(
+        "events",
+        "edit",
+        before,
+        existing,
+        'Edited event "' + title + '"',
+      );
       showToast("Changes saved.");
     }
     saveData(KEYS.events, events);
@@ -1584,11 +1631,13 @@ function setupEventsPage() {
       if (!window.confirm('Delete "' + item.title + '"?')) return;
       events = events.filter((entry) => entry.id !== id);
       saveData(KEYS.events, events);
-<<<<<<< Updated upstream
-      logActivity('Deleted event "' + item.title + '"', "delete");
-=======
-      recordChange("events", "delete", item, null, 'Deleted event "' + item.title + '"');
->>>>>>> Stashed changes
+      recordChange(
+        "events",
+        "delete",
+        item,
+        null,
+        'Deleted event "' + item.title + '"',
+      );
       render();
       showToast("Event deleted.");
     }
@@ -1652,10 +1701,7 @@ function buildBackup() {
       officers: loadData(KEYS.officers, DEFAULT_OFFICERS),
       events: loadData(KEYS.events, DEFAULT_EVENTS),
       activity: loadData(KEYS.activity, []),
-<<<<<<< Updated upstream
-=======
       changelog: loadData(KEYS.changelog, []),
->>>>>>> Stashed changes
     },
   };
 }
@@ -1673,7 +1719,9 @@ function checkList(list, label, check, needsUniqueIds) {
   for (let i = 0; i < list.length; i++) {
     const entry = list[i];
     if (!entry || typeof entry !== "object" || !check(entry)) {
-      return label + " entry #" + (i + 1) + " is missing data or has a bad value.";
+      return (
+        label + " entry #" + (i + 1) + " is missing data or has a bad value."
+      );
     }
     if (needsUniqueIds) {
       if (!isCount(entry.id) || seen.has(entry.id)) {
@@ -1687,7 +1735,12 @@ function checkList(list, label, check, needsUniqueIds) {
 
 // Checks a parsed backup file. Returns { error } or { data }.
 function validateBackup(backup) {
-  if (!backup || backup.app !== BACKUP_APP_ID || typeof backup.data !== "object" || !backup.data) {
+  if (
+    !backup ||
+    backup.app !== BACKUP_APP_ID ||
+    typeof backup.data !== "object" ||
+    !backup.data
+  ) {
     return { error: "This isn't an ITPC ERP backup file." };
   }
   const data = backup.data;
@@ -1702,15 +1755,22 @@ function validateBackup(backup) {
     checkList(
       data.inventory,
       "Inventory",
-      (e) => isText(e.name) && e.name.trim() !== "" && e.category in CATEGORY_LABELS && isCount(e.quantity),
+      (e) =>
+        isText(e.name) &&
+        e.name.trim() !== "" &&
+        e.category in CATEGORY_LABELS &&
+        isCount(e.quantity),
       true,
     ),
     checkList(
       data.officers,
       "Officers",
       (e) =>
-        isText(e.name) && e.name.trim() !== "" && e.position in POSITION_LABELS &&
-        isText(e.committee) && (e.status === "active" || e.status === "inactive"),
+        isText(e.name) &&
+        e.name.trim() !== "" &&
+        e.position in POSITION_LABELS &&
+        isText(e.committee) &&
+        (e.status === "active" || e.status === "inactive"),
       true,
     ),
     data.events === undefined
@@ -1719,34 +1779,45 @@ function validateBackup(backup) {
           data.events,
           "Events",
           (e) =>
-            isText(e.title) && e.title.trim() !== "" &&
+            isText(e.title) &&
+            e.title.trim() !== "" &&
             /^\d{4}-\d{2}-\d{2}$/.test(e.date) &&
             (e.time === "" || /^\d{2}:\d{2}$/.test(e.time)) &&
-            e.type in EVENT_TYPE_LABELS && isText(e.location) && isText(e.description),
+            e.type in EVENT_TYPE_LABELS &&
+            isText(e.location) &&
+            isText(e.description),
           true,
         ),
     data.activity === undefined
       ? null
-      : checkList(data.activity, "Activity", (e) => isText(e.message) && isText(e.time), false),
-<<<<<<< Updated upstream
-=======
+      : checkList(
+          data.activity,
+          "Activity",
+          (e) => isText(e.message) && isText(e.time),
+          false,
+        ),
     data.changelog === undefined
       ? null
       : checkList(
           data.changelog,
           "Change log",
           (e) =>
-            isText(e.time) && isText(e.user) && isText(e.role) &&
-            isText(e.module) && isText(e.action) && isText(e.target) &&
+            isText(e.time) &&
+            isText(e.user) &&
+            isText(e.role) &&
+            isText(e.module) &&
+            isText(e.action) &&
+            isText(e.target) &&
             Array.isArray(e.details) &&
             e.details.every(
               (d) =>
-                d && isText(d.field) &&
-                (d.from === null || isText(d.from)) && (d.to === null || isText(d.to)),
+                d &&
+                isText(d.field) &&
+                (d.from === null || isText(d.from)) &&
+                (d.to === null || isText(d.to)),
             ),
           true,
         ),
->>>>>>> Stashed changes
   ].find((message) => message !== null);
 
   return problems ? { error: problems } : { data: data };
@@ -1829,9 +1900,14 @@ function setupBackupPanel() {
 
       const data = result.data;
       const counts =
-        data.inventory.length + " items, " + data.officers.length + " officers" +
+        data.inventory.length +
+        " items, " +
+        data.officers.length +
+        " officers" +
         (data.events ? ", " + data.events.length + " events" : "");
-      const when = backup.exportedAt ? " from " + formatTime(backup.exportedAt) : "";
+      const when = backup.exportedAt
+        ? " from " + formatTime(backup.exportedAt)
+        : "";
       if (
         !window.confirm(
           "Restore " + counts + when + "?\n\nThis replaces your current data.",
@@ -1844,15 +1920,17 @@ function setupBackupPanel() {
       saveData(KEYS.officers, data.officers);
       if (data.events) saveData(KEYS.events, data.events);
       if (data.activity) saveData(KEYS.activity, data.activity.slice(0, 10));
-<<<<<<< Updated upstream
-=======
       // Old backups have no change log: keep the current one instead of wiping it
-      if (data.changelog) saveData(KEYS.changelog, data.changelog.slice(0, CHANGELOG_LIMIT));
+      if (data.changelog)
+        saveData(KEYS.changelog, data.changelog.slice(0, CHANGELOG_LIMIT));
       writeChangeLog("system", "restore", "Backup restored", [
         { field: "Restored", from: null, to: counts },
-        { field: "Backup made", from: null, to: backup.exportedAt ? formatTime(backup.exportedAt) : "unknown" },
+        {
+          field: "Backup made",
+          from: null,
+          to: backup.exportedAt ? formatTime(backup.exportedAt) : "unknown",
+        },
       ]);
->>>>>>> Stashed changes
 
       sessionStorage.setItem("itpc_flash", "Backup restored.");
       window.location.reload();
@@ -1867,13 +1945,23 @@ function setupBackupPanel() {
 // uses the browser's print dialog; the toolbar is hidden by print CSS.
 // ============================================================
 function reportTable(headers, rows, emptyText) {
-  if (rows.length === 0) return '<p class="report-empty">' + escapeHTML(emptyText) + "</p>";
+  if (rows.length === 0)
+    return '<p class="report-empty">' + escapeHTML(emptyText) + "</p>";
 
   const head = headers.map((h) => "<th>" + escapeHTML(h) + "</th>").join("");
   const body = rows
-    .map((cells) => "<tr>" + cells.map((c) => "<td>" + c + "</td>").join("") + "</tr>")
+    .map(
+      (cells) =>
+        "<tr>" + cells.map((c) => "<td>" + c + "</td>").join("") + "</tr>",
+    )
     .join("");
-  return "<table><thead><tr>" + head + "</tr></thead><tbody>" + body + "</tbody></table>";
+  return (
+    "<table><thead><tr>" +
+    head +
+    "</tr></thead><tbody>" +
+    body +
+    "</tbody></table>"
+  );
 }
 
 function setupReportPage() {
@@ -1895,7 +1983,8 @@ function setupReportPage() {
   document.getElementById("reportMeta").textContent =
     "Generated " +
     new Date().toLocaleString([], { dateStyle: "long", timeStyle: "short" }) +
-    " by " + (sessionStorage.getItem("userName") || "Guest");
+    " by " +
+    (sessionStorage.getItem("userName") || "Guest");
 
   const stats = [
     ["Inventory items", items.length],
@@ -1905,10 +1994,22 @@ function setupReportPage() {
     ["Upcoming events", upcoming.length],
   ];
   document.getElementById("reportStats").innerHTML = stats
-    .map((s) => "<div><b>" + escapeHTML(s[1]) + "</b><span>" + escapeHTML(s[0]) + "</span></div>")
+    .map(
+      (s) =>
+        "<div><b>" +
+        escapeHTML(s[1]) +
+        "</b><span>" +
+        escapeHTML(s[0]) +
+        "</span></div>",
+    )
     .join("");
 
-  const stockLabel = (item) => (item.quantity === 0 ? "Out of stock" : getInventoryStatus(item) === "low" ? "Low stock" : "In stock");
+  const stockLabel = (item) =>
+    item.quantity === 0
+      ? "Out of stock"
+      : getInventoryStatus(item) === "low"
+        ? "Low stock"
+        : "In stock";
   const stockCell = (item) =>
     getInventoryStatus(item) === "low"
       ? '<strong class="r-low">' + stockLabel(item) + "</strong>"
@@ -1916,7 +2017,11 @@ function setupReportPage() {
 
   document.getElementById("reportLow").innerHTML = reportTable(
     ["Item", "Category", "Quantity"],
-    lowItems.map((item) => [escapeHTML(item.name), escapeHTML(CATEGORY_LABELS[item.category]), String(item.quantity)]),
+    lowItems.map((item) => [
+      escapeHTML(item.name),
+      escapeHTML(CATEGORY_LABELS[item.category]),
+      String(item.quantity),
+    ]),
     "No items are at or below the low-stock limit (" + LOW_STOCK_LIMIT + ").",
   );
 
@@ -1925,7 +2030,12 @@ function setupReportPage() {
     items
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
-      .map((item) => [escapeHTML(item.name), escapeHTML(CATEGORY_LABELS[item.category]), String(item.quantity), stockCell(item)]),
+      .map((item) => [
+        escapeHTML(item.name),
+        escapeHTML(CATEGORY_LABELS[item.category]),
+        String(item.quantity),
+        stockCell(item),
+      ]),
     "No inventory items.",
   );
 
@@ -1955,12 +2065,12 @@ function setupReportPage() {
     "No upcoming events.",
   );
 
-  document.getElementById("printBtn").addEventListener("click", () => window.print());
+  document
+    .getElementById("printBtn")
+    .addEventListener("click", () => window.print());
 }
 
 // ============================================================
-<<<<<<< Updated upstream
-=======
 // L. CHANGE LOG PAGE (changelog.html)
 // Read-only view of the audit trail: newest first, filterable, CSV export.
 // ============================================================
@@ -1979,14 +2089,18 @@ const MODULE_LABELS = {
 };
 
 function formatFullTime(isoString) {
-  return new Date(isoString).toLocaleString([], { dateStyle: "medium", timeStyle: "medium" });
+  return new Date(isoString).toLocaleString([], {
+    dateStyle: "medium",
+    timeStyle: "medium",
+  });
 }
 
 // One line per changed field, as plain text (used for search and CSV)
 function changeDetailsText(entry) {
   return entry.details
     .map((d) => {
-      if (d.from !== null && d.to !== null) return d.field + ": " + d.from + " → " + d.to;
+      if (d.from !== null && d.to !== null)
+        return d.field + ": " + d.from + " → " + d.to;
       if (d.to !== null) return d.field + ": " + d.to;
       return d.field + ": " + d.from;
     })
@@ -2009,9 +2123,19 @@ function changeDetailsHTML(entry) {
       .map((d) => {
         const label = "<b>" + escapeHTML(d.field) + "</b> ";
         if (d.from !== null && d.to !== null) {
-          return "<li>" + label + "<del>" + escapeHTML(d.from) + "</del> → <ins>" + escapeHTML(d.to) + "</ins></li>";
+          return (
+            "<li>" +
+            label +
+            "<del>" +
+            escapeHTML(d.from) +
+            "</del> → <ins>" +
+            escapeHTML(d.to) +
+            "</ins></li>"
+          );
         }
-        return "<li>" + label + escapeHTML(d.to !== null ? d.to : d.from) + "</li>";
+        return (
+          "<li>" + label + escapeHTML(d.to !== null ? d.to : d.from) + "</li>"
+        );
       })
       .join("") +
     "</ul>"
@@ -2036,7 +2160,9 @@ function setupChangelogPage() {
   let shown = [];
 
   // Fill the "Who" dropdown with the people who actually appear in the log
-  const names = [...new Set(entries.map((e) => e.user))].sort((a, b) => a.localeCompare(b));
+  const names = [...new Set(entries.map((e) => e.user))].sort((a, b) =>
+    a.localeCompare(b),
+  );
   names.forEach((name) => {
     const option = document.createElement("option");
     option.value = name;
@@ -2053,7 +2179,13 @@ function setupChangelogPage() {
       const day = toDateKey(new Date(e.time)); // local date, same as the stamps shown
       if (fromEl.value && day < fromEl.value) return false;
       if (toEl.value && day > toEl.value) return false;
-      if (term && (e.target + " " + changeDetailsText(e) + " " + e.user).toLowerCase().indexOf(term) === -1) return false;
+      if (
+        term &&
+        (e.target + " " + changeDetailsText(e) + " " + e.user)
+          .toLowerCase()
+          .indexOf(term) === -1
+      )
+        return false;
       return true;
     });
 
@@ -2072,7 +2204,9 @@ function setupChangelogPage() {
 
     countEl.textContent = shown.length + " of " + entries.length + " entries";
     // Show "Clear filters" whenever ANY filter is set, even one that matches everything
-    const anyFilter = [searchEl, moduleEl, actionEl, userEl, fromEl, toEl].some((el) => el.value !== "");
+    const anyFilter = [searchEl, moduleEl, actionEl, userEl, fromEl, toEl].some(
+      (el) => el.value !== "",
+    );
     clearEl.hidden = !anyFilter;
     tableEl.hidden = shown.length === 0;
     emptyEl.hidden = shown.length > 0;
@@ -2093,14 +2227,34 @@ function setupChangelogPage() {
 
   // Exports what is currently shown (so filters apply to the CSV too)
   document.getElementById("logExportBtn").addEventListener("click", () => {
-    const header = ["Date and time", "User", "Role", "Module", "Action", "Item", "Changes"];
+    const header = [
+      "Date and time",
+      "User",
+      "Role",
+      "Module",
+      "Action",
+      "Item",
+      "Changes",
+    ];
     const rows = shown.map((e) => [
-      e.time, e.user, e.role, MODULE_LABELS[e.module] || e.module,
-      ACTION_LABELS[e.action] || e.action, e.target, changeDetailsText(e),
+      e.time,
+      e.user,
+      e.role,
+      MODULE_LABELS[e.module] || e.module,
+      ACTION_LABELS[e.action] || e.action,
+      e.target,
+      changeDetailsText(e),
     ]);
-    const csv = [header].concat(rows).map((row) => row.map(csvCell).join(",")).join("\r\n");
+    const csv = [header]
+      .concat(rows)
+      .map((row) => row.map(csvCell).join(","))
+      .join("\r\n");
     // The leading \ufeff makes Excel read the file as UTF-8 (keeps the → arrows intact)
-    downloadFile("itpc-erp-change-log-" + toDateKey(new Date()) + ".csv", "\ufeff" + csv, "text/csv;charset=utf-8");
+    downloadFile(
+      "itpc-erp-change-log-" + toDateKey(new Date()) + ".csv",
+      "\ufeff" + csv,
+      "text/csv;charset=utf-8",
+    );
     showToast("Exported " + shown.length + " entries.");
   });
 
@@ -2108,7 +2262,6 @@ function setupChangelogPage() {
 }
 
 // ============================================================
->>>>>>> Stashed changes
 // H. THEME (light / dark)
 // The saved choice is applied by a tiny script in each page's <head>
 // (so there's no flash). This only handles the toggle button.
@@ -2149,8 +2302,5 @@ document.addEventListener("DOMContentLoaded", () => {
   setupDashboard();
   setupBackupPanel();
   setupReportPage();
-<<<<<<< Updated upstream
-=======
   setupChangelogPage();
->>>>>>> Stashed changes
 });
