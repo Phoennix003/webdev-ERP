@@ -74,8 +74,6 @@
               >Events</a
             >
           </li>
-<<<<<<< Updated upstream
-=======
           <li>
             <a href="changelog.html"
               ><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -84,7 +82,6 @@
               >Change log</a
             >
           </li>
->>>>>>> Stashed changes
         </ul>
 
         <div class="sidebar-footer">
@@ -186,7 +183,9 @@
           <div class="panel">
             <div class="panel-header">
               <h2>Low stock alerts</h2>
-              <a class="btn btn-secondary" href="inventory.html">View inventory</a>
+              <a class="btn btn-secondary" href="inventory.html"
+                >View inventory</a
+              >
             </div>
             <ul class="low-list" id="lowStockList"></ul>
             <p class="empty-state" id="lowStockEmpty" hidden>
@@ -199,7 +198,9 @@
         <section class="panel" style="margin-top: 24px">
           <div class="panel-header">
             <h2>Recent activity</h2>
-            <a class="btn btn-secondary" href="changelog.html">View full change log</a>
+            <a class="btn btn-secondary" href="changelog.html"
+              >View full change log</a
+            >
             <button class="btn btn-secondary admin-only" id="resetDataBtn">
               Reset demo data
             </button>
@@ -225,7 +226,12 @@
             <button class="btn btn-secondary admin-only" id="restoreBtn">
               Restore from backup
             </button>
-            <input type="file" id="restoreFile" accept=".json,application/json" hidden />
+            <input
+              type="file"
+              id="restoreFile"
+              accept=".json,application/json"
+              hidden
+            />
             <a class="btn btn-secondary" href="report.html">Print report</a>
           </div>
           <p class="form-error" id="backupStatus" role="status" hidden></p>

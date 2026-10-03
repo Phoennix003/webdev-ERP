@@ -47,8 +47,18 @@
   --placeholder: #6b6f75;
   --on-accent: #ffffff; /* text that sits on crimson/maroon */
   --login-card-bg: rgba(35, 37, 39, 0.92);
-  --login-wash: linear-gradient(160deg, #6d0c12 0%, var(--maroon) 40%, var(--ink) 100%);
-  --wordmark-grad: linear-gradient(180deg, #f3f4f5 0%, #8d9095 52%, #cfd1d4 100%);
+  --login-wash: linear-gradient(
+    160deg,
+    #6d0c12 0%,
+    var(--maroon) 40%,
+    var(--ink) 100%
+  );
+  --wordmark-grad: linear-gradient(
+    180deg,
+    #f3f4f5 0%,
+    #8d9095 52%,
+    #cfd1d4 100%
+  );
 
   color-scheme: dark; /* makes native dropdowns, scrollbars, number spinners dark */
 }
@@ -74,8 +84,18 @@
   --hover-bg: rgba(0, 0, 0, 0.05);
   --placeholder: #8a8f96;
   --login-card-bg: rgba(255, 255, 255, 0.94);
-  --login-wash: linear-gradient(160deg, #f4d3d6 0%, #f3e3e4 40%, var(--ink) 100%);
-  --wordmark-grad: linear-gradient(180deg, #4a4d52 0%, #1f2226 52%, #5b5f65 100%);
+  --login-wash: linear-gradient(
+    160deg,
+    #f4d3d6 0%,
+    #f3e3e4 40%,
+    var(--ink) 100%
+  );
+  --wordmark-grad: linear-gradient(
+    180deg,
+    #4a4d52 0%,
+    #1f2226 52%,
+    #5b5f65 100%
+  );
 
   color-scheme: light;
 }
@@ -1024,8 +1044,7 @@ tbody td a.delete-link:hover {
       rgba(255, 255, 255, 0.06) 80% 80.25%,
       transparent 80.25%
     ),
-    /* base red-to-black wash */
-    var(--login-wash);
+    /* base red-to-black wash */ var(--login-wash);
 }
 
 .login-hero,
@@ -1950,8 +1969,6 @@ body.report-page {
   }
 }
 
-<<<<<<< Updated upstream
-=======
 /* ---------- 9e. Change log page ---------- */
 .table-scroll {
   overflow-x: auto;
@@ -2039,5 +2056,3 @@ body.report-page {
 .log-date input {
   padding: 8px 10px;
 }
-
->>>>>>> Stashed changes

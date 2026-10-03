@@ -74,8 +74,6 @@
               >Events</a
             >
           </li>
-<<<<<<< Updated upstream
-=======
           <li>
             <a href="changelog.html"
               ><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -84,7 +82,6 @@
               >Change log</a
             >
           </li>
->>>>>>> Stashed changes
         </ul>
 
         <div class="sidebar-footer">
@@ -133,13 +130,30 @@
             <div class="cal-header">
               <h2 id="calMonth" aria-live="polite"></h2>
               <div class="cal-nav">
-                <button type="button" class="btn btn-secondary" id="calPrev" aria-label="Previous month">&lsaquo;</button>
-                <button type="button" class="btn btn-secondary" id="calToday">Today</button>
-                <button type="button" class="btn btn-secondary" id="calNext" aria-label="Next month">&rsaquo;</button>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  id="calPrev"
+                  aria-label="Previous month"
+                >
+                  &lsaquo;
+                </button>
+                <button type="button" class="btn btn-secondary" id="calToday">
+                  Today
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  id="calNext"
+                  aria-label="Next month"
+                >
+                  &rsaquo;
+                </button>
               </div>
             </div>
             <div class="cal-weekdays" aria-hidden="true">
-              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+              <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span
+              ><span>Thu</span><span>Fri</span><span>Sat</span>
             </div>
             <div class="cal-grid" id="calendarGrid"></div>
             <ul class="cal-legend" aria-hidden="true">
@@ -153,7 +167,12 @@
           <section class="panel" aria-label="Event list">
             <div class="panel-header">
               <h2 id="eventListTitle">Events this month</h2>
-              <button type="button" class="btn btn-secondary" id="clearDayBtn" hidden>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="clearDayBtn"
+                hidden
+              >
                 Show month
               </button>
             </div>
@@ -223,7 +242,11 @@
           </div>
           <div class="form-field">
             <label for="eventDescription">Description (optional)</label>
-            <textarea id="eventDescription" name="eventDescription" rows="3"></textarea>
+            <textarea
+              id="eventDescription"
+              name="eventDescription"
+              rows="3"
+            ></textarea>
           </div>
           <p id="eventError" class="form-error" hidden></p>
           <button type="submit" class="btn btn-primary" id="eventSubmit">
