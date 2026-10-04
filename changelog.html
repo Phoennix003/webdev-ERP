@@ -119,12 +119,19 @@
             <h1>Change log</h1>
             <p>Who changed what, and when. Newest first.</p>
           </div>
-          <button class="btn btn-secondary" id="logExportBtn">Export CSV</button>
+          <button class="btn btn-secondary" id="logExportBtn">
+            Export CSV
+          </button>
         </div>
 
         <div class="toolbar">
           <div class="search-wrap">
-            <input type="text" id="logSearch" placeholder="Search item, change or person..." aria-label="Search the change log" />
+            <input
+              type="text"
+              id="logSearch"
+              placeholder="Search item, change or person..."
+              aria-label="Search the change log"
+            />
           </div>
           <div class="toolbar-filters">
             <select id="logModule" aria-label="Filter by module">
@@ -141,13 +148,25 @@
               <option value="delete">Deleted</option>
               <option value="restore">Restored</option>
               <option value="reset">Reset</option>
+              <option value="integrity">Integrity alert</option>
             </select>
             <select id="logUser" aria-label="Filter by person">
               <option value="">Everyone</option>
             </select>
-            <label class="log-date">From <input type="date" id="logFrom" aria-label="From date" /></label>
-            <label class="log-date">To <input type="date" id="logTo" aria-label="To date" /></label>
-            <button type="button" class="btn btn-secondary" id="logClear" hidden>Clear filters</button>
+            <label class="log-date"
+              >From <input type="date" id="logFrom" aria-label="From date"
+            /></label>
+            <label class="log-date"
+              >To <input type="date" id="logTo" aria-label="To date"
+            /></label>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              id="logClear"
+              hidden
+            >
+              Clear filters
+            </button>
             <span class="result-count" id="logCount" aria-live="polite"></span>
           </div>
         </div>
@@ -177,6 +196,7 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+    <script src="js/auth.js"></script>
     <script src="js/main.js"></script>
   </body>
 </html>
